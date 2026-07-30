@@ -1,0 +1,11 @@
+.proficiency-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    padding-right: 0.25rem;
+}
+
+.proficiency-actions .proficiency-btn {
+    flex-shrink: 0;
+}

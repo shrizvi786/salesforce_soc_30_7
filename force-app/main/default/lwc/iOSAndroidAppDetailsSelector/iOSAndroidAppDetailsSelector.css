@@ -1,0 +1,336 @@
+.filter-popover-anchor {
+    position: fixed;
+    z-index: 1100;
+    background: rgba(0, 0, 0, 0.4);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.filter-popover-custom {
+    position: absolute;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    background: white;
+    min-width: 460px;
+}
+
+.filter-popover-custom .slds-form-element {
+    margin-bottom: 1.5rem !important;
+}
+
+/* Add this to the component's CSS file for responsive table container height */
+.slds-table_container {
+    border: 1px solid #dddbda;
+    border-radius: 0.25rem;
+}
+
+
+/* 
+  ##Device = Desktops
+  ##Screen = 1281px to higher resolution desktops
+*/
+
+@media (min-width: 2561px) {
+    .slds-table_container {
+        height: 70vh;
+        max-height: 600px;
+        min-height: 350px;
+    }
+}
+
+@media (min-width: 1440px) and (max-width: 2560px) {
+    .slds-table_container {
+        height: 70vh;
+        max-height: 600px;
+        min-height: 246px;
+    }
+}
+
+/* 
+  ##Device = Laptops, Desktops
+  ##Screen = B/w 1025px to 1280px
+*/
+@media (min-width: 1024px) and (max-width: 1439px) {
+    .slds-table_container { 
+        height: 38vh;
+        max-height: 300px;
+        min-height: 246px;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+    .slds-table_container {
+        height: 62vh;
+        max-height: 550px;
+        min-height: 200px;
+    }
+}  
+ 
+/* 
+  ##Device = Low Resolution Tablets, Mobiles (Landscape)
+  ##Screen = B/w 481px to 767px
+*/
+@media (min-width: 481px) and (max-width: 767px) {
+    .slds-table_container {
+        height: 57vh;
+        max-height: 350px;
+        min-height: 120px;
+    }
+}
+
+/* 
+  ##Device = Most of the Smartphones Mobiles (Portrait)
+  ##Screen = B/w 320px to 479px
+*/
+@media (min-width: 320px) and (max-width: 480px) {
+    .slds-table_container {
+        height: 57vh;
+        max-height: 220px;
+        min-height: 80px;
+    }
+}
+
+.selected-badge {
+    font-weight: 700;
+    font-size: 14px;
+    border: 2px solid #1589ee;   /* Salesforce brand blue */
+    box-shadow: 0 0 0 2px rgba(21,137,238,0.3);
+}
+
+.custom-modal {
+    width: 650px;
+    max-width: 95vw;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.custom-header {
+    background: #f4f6f9;
+    padding: 14px 20px;
+    border-top: 4px solid transparent;
+    display: flex;
+    justify-content: center;
+}
+
+.custom-header.ios {
+    border-top-color: #6b4ce6;
+}
+
+.custom-header.staff {
+    border-top-color: #2e844a;
+}
+
+.custom-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    color: #1f1f1f;
+}
+
+.custom-body {
+    padding: 20px;
+}
+
+.field-block {
+    margin-bottom: 18px;
+}
+
+.custom-label {
+    display: block;
+    font-weight: 700;
+    font-size: 13px;
+    color: #1f1f1f;
+        margin-bottom: 8px;
+
+}
+.slds-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+/* .custom-label.required::before {
+    content: "* ";
+    color: #d93025;
+    font-weight: 700;
+} */
+
+.custom-footer {
+    background: #f4f6f9;
+    padding: 12px;
+    text-align: center;
+    border-top: 1px solid #ddd;
+}
+
+.modal-loader-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    /* ✅ NO border-radius - stays inside content area */
+}
+
+/* ✅ NEW - Position overlay INSIDE modal content only */
+.slds-modal__content {
+    position: relative;  /* ✅ Makes content area the positioning parent */
+}
+
+.modal-loader-container {
+    text-align: center;
+}
+
+
+/* Poll Modal Container */
+.slds-modal__container {
+    border-radius: 0.5rem;
+}
+
+/* Poll Modal Header */
+.slds-modal__header {
+    border-bottom: 1px solid #dddbda;
+    padding: 1rem;
+    background: #f4f6f9;
+}
+
+.slds-modal__header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f1f1f;
+    margin: 0;
+    text-align: center;
+}
+
+/* Poll Modal Content */
+.slds-modal__content {
+    padding: 1.5rem;
+    background: #fff;
+}
+
+/* Poll Question Field */
+.slds-form-element__label {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #1f1f1f;
+    margin-bottom: 0.5rem;
+}
+
+/* Options Section */
+.poll-options-container {
+    margin-top: 1rem;
+}
+
+.poll-option-input {
+    margin-bottom: 0.75rem;
+}
+
+/* Active Until Section */
+.active-until-container {
+    margin-top: 1rem;
+}
+
+/* .active-until-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #1f1f1f;
+    margin-bottom: 0.5rem;
+} */
+
+/* Date and Time Inputs */
+.slds-grid.slds-gutters {
+    margin-top: 0.5rem;
+}
+
+.slds-col {
+    padding: 0 0.5rem;
+}
+
+/* Add Option Button */
+.add-option-button {
+    margin-top: 0.75rem;
+    background: #f4f6f9;
+    border: 1px solid #dddbda;
+    color: #1f1f1f;
+}
+
+/* Cancel and Save Poll Buttons */
+.slds-modal__footer {
+    border-top: 1px solid #dddbda;
+    padding: 1rem;
+    background: #f4f6f9;
+    text-align: right;
+}
+
+.slds-button {
+    margin-left: 0.5rem;
+}
+
+/* Remove Option Icon */
+.remove-option-icon {
+    cursor: pointer;
+    color: #d93025;
+    font-size: 1.25rem;
+    margin-left: 0.5rem;
+}
+
+/* Note Text */
+.note-text {
+    font-size: 0.75rem;
+    color: #6b6b6b;
+    margin-top: 0.25rem;
+}
+
+
+/* Required Field Indicator */
+.slds-required {
+    color: #d93025;
+}
+
+
+.custom-scroll-panel {
+    overflow-y: auto;
+    max-height: 36vh; /* Default for desktop */
+}
+
+/* Large screens (Desktops) */
+@media screen and (min-height: 900px) {
+    .custom-scroll-panel {
+        max-height: 54vh;
+    }
+}
+
+/* Standard laptops */
+@media screen and (max-height: 899px) and (min-height: 700px) {
+    .custom-scroll-panel {
+        max-height: 36vh;
+    }
+}
+
+/* Tablets */
+@media screen and (max-height: 699px) and (min-height: 600px) {
+    .custom-scroll-panel {
+        max-height: 32vh;
+    }
+}
+
+/* Small tablets / large phones */
+@media screen and (max-height: 599px) and (min-height: 500px) {
+    .custom-scroll-panel {
+        max-height: 28vh;
+    }
+}
+
+/* Mobile devices */
+@media screen and (max-height: 499px) {
+    .custom-scroll-panel {
+        max-height: 24vh;
+    }
+}

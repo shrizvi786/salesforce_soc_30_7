@@ -1,0 +1,7 @@
+.hmh-cb-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2rem;
+    padding: 0.15rem 0.35rem;
+}

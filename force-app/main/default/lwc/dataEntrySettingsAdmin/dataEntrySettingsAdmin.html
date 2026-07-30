@@ -1,0 +1,636 @@
+<template>
+    <lightning-card title="Data Entry Dashboard Settings" icon-name="standard:settings">
+        <div class="slds-p-around_medium">
+            <template if:true={isLoadingRows}>
+                <div class="slds-align_absolute-center slds-p-around_large loading-container">
+                    <lightning-spinner alternative-text="Loading settings" size="medium"></lightning-spinner>
+                    <p class="slds-m-top_medium slds-text-body_small slds-text-color_weak loading-text">
+                        Loading settings&hellip;
+                    </p>
+                </div>
+            </template>
+            <template if:false={isLoadingRows}>
+                <template if:true={hasAnyRows}>
+                    <div class="toolbar-above-search slds-m-bottom_small">
+                        <lightning-button
+                            label="Group"
+                            title="Create a rollup group from selected rows (select at least two)"
+                            variant="brand"
+                            onclick={openGroupModal}
+                            disabled={isGroupButtonDisabled}
+                        ></lightning-button>
+                    </div>
+                    <div class="table-filter-bar slds-m-bottom_small">
+                        <div class="slds-grid slds-gutters slds-wrap slds-grid_vertical-align-end">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_4-of-12">
+                                <lightning-input
+                                    type="search"
+                                    label="School DBN"
+                                    placeholder="e.g. 08X071"
+                                    value={dbnSearchTerm}
+                                    onchange={handleDbnSearchChange}
+                                ></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_4-of-12">
+                                <lightning-input
+                                    type="search"
+                                    label="Assessment name"
+                                    placeholder="e.g. test 6"
+                                    value={assessmentSearchTerm}
+                                    onchange={handleAssessmentSearchChange}
+                                ></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12 slds-text-align_right">
+                                <lightning-button
+                                    label="Clear filters"
+                                    variant="neutral"
+                                    onclick={handleClearTableFilter}
+                                    disabled={isClearFilterDisabled}
+                                    class="clear-filter-btn"
+                                ></lightning-button>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1">
+                                <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small table-filter-help">
+                                    Type a DBN or assessment name — partial match is enough. Use both boxes together to narrow the list.
+                                </p>
+                                <template if:true={hasActiveTableFilter}>
+                                    <p class="slds-text-body_small slds-m-top_xx-small table-filter-active">
+                                        <span class="slds-text-color_weak">Active: </span>{activeFilterSummary}
+                                    </p>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rollup-panel slds-box slds-theme_shade slds-m-bottom_medium">
+                        <div class="rollup-panel-header slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                            <div>
+                                <h3 class="slds-text-heading_small slds-m-bottom_xx-small">Add or remove in an existing group</h3>
+                                <p class="slds-text-body_small slds-text-color_weak rollup-panel-help">
+                                    <strong>1.</strong> Select row(s) in the table below.
+                                    <strong>2.</strong> Click the search field to open the list, then type to filter or pick a group.
+                                    <strong>3.</strong> Click <strong>Add selected to group</strong>.
+                                    To remove, pick the group, select member rows, then <strong>Remove selected from group</strong>
+                                    (each group must keep at least two).
+                                </p>
+                            </div>
+                            <lightning-button-icon
+                                icon-name="utility:refresh"
+                                alternative-text="Refresh group list"
+                                title="Refresh group list"
+                                variant="border"
+                                onclick={handleRefreshRollupGroups}
+                            ></lightning-button-icon>
+                        </div>
+                        <div class="rollup-panel-controls slds-m-top_small" data-rollup-picker-panel>
+                            <lightning-input
+                                type="search"
+                                label="Search rollup groups"
+                                variant="label-hidden"
+                                placeholder="Click to open list, then search by name or date…"
+                                value={rollupGroupSearchTerm}
+                                onchange={handleRollupGroupSearch}
+                                onfocus={handleRollupGroupSearchFocus}
+                                onblur={handleRollupGroupSearchBlur}
+                                class="group-picker-search"
+                            ></lightning-input>
+                            <template if:true={isRollupGroupListOpen}>
+                                <div class="group-picker-scroll slds-m-top_x-small" role="listbox" aria-label="Rollup groups">
+                                    <template if:true={rollupGroupDropdownEmpty}>
+                                        <p class="slds-text-body_small slds-text-color_weak slds-p-around_small">
+                                            No groups match your search.
+                                        </p>
+                                    </template>
+                                    <template for:each={filteredRollupGroupRows} for:item="row">
+                                        <button
+                                            key={row.value}
+                                            type="button"
+                                            class={row.rowClass}
+                                            data-id={row.value}
+                                            onclick={handlePickRollupGroup}
+                                        >
+                                            {row.label}
+                                        </button>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        <template if:true={hasRollupGroupSelected}>
+                            <div class="rollup-members-toolbar slds-m-top_small slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-wrap">
+                                <div class="rollup-members-heading slds-text-color_weak slds-m-right_small">
+                                    <span class="slds-text-title_caps">Administration periods in this group</span>
+                                    <span class="rollup-members-heading-name"> &mdash; {selectedRollupGroupName}</span>
+                                </div>
+                                <div class="rollup-members-toolbar-actions">
+                                    <lightning-button
+                                        label="Assign group to dashboard"
+                                        title="Open the dashboard tree and place this group on a menu"
+                                        variant="neutral"
+                                        onclick={openGroupAssignModal}
+                                        disabled={isAssignGroupToDashboardDisabled}
+                                        class="slds-m-right_x-small"
+                                    ></lightning-button>
+                                    <lightning-button-icon
+                                        icon-name="utility:refresh"
+                                        alternative-text="Refresh members"
+                                        title="Refresh members"
+                                        variant="border"
+                                        onclick={handleRefreshMembers}
+                                        disabled={isLoadingRollupMembers}
+                                    ></lightning-button-icon>
+                                </div>
+                            </div>
+                            <template if:true={isLoadingRollupMembers}>
+                                <div class="slds-align_absolute-center slds-p-around_medium">
+                                    <lightning-spinner alternative-text="Loading members" size="small"></lightning-spinner>
+                                </div>
+                            </template>
+                            <template if:false={isLoadingRollupMembers}>
+                                <div class="rollup-members-table slds-m-top_x-small">
+                                    <lightning-datatable
+                                        key-field="id"
+                                        key={memberDatatableKey}
+                                        data={groupMemberRows}
+                                        columns={memberColumns}
+                                        max-row-selection={memberMaxRowSelection}
+                                        selected-rows={selectedMemberRowIds}
+                                        onrowselection={handleMemberRowSelection}
+                                    ></lightning-datatable>
+                                </div>
+                                <div class="rollup-member-actions slds-m-top_small slds-grid slds-wrap slds-gutters_x-small">
+                                    <div class="slds-col slds-grow-none">
+                                        <lightning-button
+                                            label="Add selected to group"
+                                            title="Adds selected rows from the main table into this group"
+                                            variant="brand"
+                                            onclick={handleAddToRollupGroup}
+                                            disabled={isAddToRollupGroupDisabled}
+                                        ></lightning-button>
+                                    </div>
+                                    <div class="slds-col slds-grow-none">
+                                        <lightning-button
+                                            label="Remove selected from group"
+                                            title="Removes selected member rows (group must keep at least two)"
+                                            variant="destructive"
+                                            onclick={handleRemoveFromRollupGroup}
+                                            disabled={isRemoveFromRollupGroupDisabled}
+                                        ></lightning-button>
+                                    </div>
+                                </div>
+                            </template>
+                        </template>
+                    </div>
+                </template>
+                <template if:true={hasRows}>
+                    <p class="slds-m-bottom_small slds-text-body_small slds-text-color_weak">
+                        {showingRange}
+                    </p>
+                    <div class="datatable-container">
+                        <c-data-entry-settings-datatable
+                            key={datatableRenderKey}
+                            key-field="rowKey"
+                            data={paginatedRows}
+                            columns={columns}
+                            onsort={handleSort}
+                            sorted-by={sortedBy}
+                            sorted-direction={sortDirection}
+                            max-row-selection={maxRowSelection}
+                            selected-rows={selectedRowKeys}
+                            onrowselection={handleRowSelection}
+                            onrecordedit={handleRecordEdit}
+                            onrecordassign={handleRecordAssign}
+                            onrecordtoggle={handleRecordToggle}
+                            onrecorddelete={handleRecordDelete}
+                        ></c-data-entry-settings-datatable>
+                    </div>
+                    <div class="pagination-bar slds-m-top_small">
+                        <div class="page-size-wrap">
+                            <span class="slds-text-body_small">Rows per page:</span>
+                            <lightning-combobox
+                                label="Page size"
+                                variant="label-hidden"
+                                value={pageSizeValue}
+                                options={pageSizeOptions}
+                                onchange={handlePageSizeChange}
+                                class="page-size-combo"
+                            ></lightning-combobox>
+                        </div>
+                        <span class="slds-text-body_small page-info">
+                            Page {currentPage} of {totalPages}
+                        </span>
+                        <div class="page-nav">
+                            <lightning-button-icon
+                                icon-name="utility:chevronleft"
+                                alternative-text="Previous page"
+                                onclick={handlePrevPage}
+                                disabled={isPrevDisabled}
+                                variant="border-filled"
+                                size="small"
+                            ></lightning-button-icon>
+                            <lightning-button-icon
+                                icon-name="utility:chevronright"
+                                alternative-text="Next page"
+                                onclick={handleNextPage}
+                                disabled={isNextDisabled}
+                                variant="border-filled"
+                                size="small"
+                            ></lightning-button-icon>
+                        </div>
+                    </div>
+                </template>
+                <template if:true={showNoSearchResults}>
+                    <div class="slds-align_absolute-center slds-p-around_large">
+                        <p class="slds-text-body_regular slds-text-color_weak">
+                            No records match your search.
+                        </p>
+                    </div>
+                </template>
+                <template if:false={hasAnyRows}>
+                    <div class="slds-align_absolute-center slds-p-around_large">
+                        <p class="slds-text-body_regular slds-text-color_weak">
+                            No Assessment Data Entry records found for the active academic year.
+                        </p>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+
+    <!-- Create rollup group modal -->
+    <template if:true={isGroupModalOpen}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container modal-group">
+                <header class="slds-modal__header">
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        variant="bare-inverse"
+                        class="slds-modal__close"
+                        onclick={closeGroupModal}
+                    ></lightning-button-icon>
+                    <h2 class="slds-modal__title slds-hyphenate">{groupModalTitle}</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <template if:true={isCreatingRollupGroup}>
+                        <div class="slds-align_absolute-center slds-p-around_medium">
+                            <lightning-spinner alternative-text="Creating group" size="small"></lightning-spinner>
+                        </div>
+                    </template>
+                    <template if:false={isCreatingRollupGroup}>
+                        <p class="slds-text-body_small slds-m-bottom_small slds-text-color_weak">
+                            Enter a name for this group. One parent record and one row per selected administration period will be created.
+                        </p>
+                        <lightning-input
+                            type="text"
+                            label="Group name"
+                            value={groupNameInput}
+                            onchange={handleGroupNameChange}
+                            required
+                            maxlength="255"
+                        ></lightning-input>
+                    </template>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button
+                        label="Cancel"
+                        onclick={closeGroupModal}
+                        disabled={isCreatingRollupGroup}
+                    ></lightning-button>
+                    <lightning-button
+                        label="Create"
+                        variant="brand"
+                        class="slds-m-left_small"
+                        onclick={handleCreateRollupGroup}
+                        disabled={isCreateGroupDisabled}
+                    ></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Performance bands modal -->
+    <template if:true={isBandsModalOpen}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container modal-wide">
+                <header class="slds-modal__header">
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        variant="bare-inverse"
+                        class="slds-modal__close"
+                        onclick={closeBandsModal}
+                    ></lightning-button-icon>
+                    <h2 class="slds-modal__title slds-hyphenate">{bandsModalTitle}</h2>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_medium modal-content-no-scroll">
+                    <template if:true={isBandsLoading}>
+                        <div class="slds-align_absolute-center" style="height: 200px;">
+                            <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+                        </div>
+                    </template>
+
+                    <template if:false={isBandsLoading}>
+                        <template if:true={selectedBandsRow}>
+                            <div class="assessment-info slds-m-bottom_medium">
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_1-of-2 info-block">
+                                        <span class="info-label">Assessment Name</span>
+                                        <span class="info-value">{selectedBandsRow.assessmentName}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 info-block">
+                                        <span class="info-label">DBN</span>
+                                        <span class="info-value">{selectedBandsRow.dbn}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div class="levels-container">
+                            <template for:each={levelsWithStyles} for:item="level">
+                                <div key={level.key} class="level-card" style={level.cardStyle}>
+                                    <template if:true={level.canRemove}>
+                                        <button class="remove-corner-btn"
+                                                data-level={level.key}
+                                                onclick={handleRemoveLevel}
+                                                title="Remove this level"
+                                                aria-label="Remove this level">&#215;</button>
+                                    </template>
+                                    <div class="level-badge" style={level.badgeStyle}
+                                         data-level={level.key}
+                                         onclick={handleBadgeClick}>
+                                        <span class="badge-number">{level.num}</span>
+                                        <template if:true={level.canRemove}>
+                                            <span class="badge-remove">&#215;</span>
+                                        </template>
+                                    </div>
+                                    <div class="level-info">
+                                        <template if:false={level.isEditing}>
+                                            <span class="level-label-text"
+                                                  data-level={level.key}
+                                                  ondblclick={handleLabelDblClick}
+                                                  title="Double-click to rename">
+                                                {level.levelName}
+                                            </span>
+                                        </template>
+                                        <template if:true={level.isEditing}>
+                                            <lightning-input
+                                                type="text"
+                                                variant="label-hidden"
+                                                label="Level name"
+                                                value={level.levelName}
+                                                data-edit-level={level.key}
+                                                onblur={handleLabelBlur}
+                                                onkeyup={handleLabelKeyUp}
+                                                class="inline-name-input"
+                                            ></lightning-input>
+                                        </template>
+                                    </div>
+                                    <div class="level-input-group">
+                                        <span class="input-prefix">{level.inputLabel}</span>
+                                        <lightning-input
+                                            type="number"
+                                            variant="label-hidden"
+                                            label="Value"
+                                            value={level.value}
+                                            data-level={level.key}
+                                            onchange={handleLevelValueChange}
+                                            min="0"
+                                            class="value-input"
+                                        ></lightning-input>
+                                        <span class="input-suffix">%</span>
+                                    </div>
+                                    <div class="level-color-group">
+                                        <input
+                                            type="color"
+                                            value={level.color}
+                                            data-level={level.key}
+                                            onchange={handleColorChange}
+                                            class="color-swatch" />
+                                        <lightning-input
+                                            type="text"
+                                            variant="label-hidden"
+                                            label="Hex"
+                                            value={level.color}
+                                            data-level={level.key}
+                                            onchange={handleHexInput}
+                                            class="hex-input"
+                                            maxlength="7"
+                                        ></lightning-input>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <template if:true={canAddLevel}>
+                            <div class="add-level-container slds-m-top_small">
+                                <lightning-button
+                                    label={addLevelLabel}
+                                    icon-name="utility:add"
+                                    variant="neutral"
+                                    onclick={handleAddLevel}
+                                ></lightning-button>
+                            </div>
+                        </template>
+
+                        <template if:true={hasSequentialError}>
+                            <div class="validation-error slds-m-top_small">
+                                <lightning-icon icon-name="utility:error" size="x-small"
+                                    variant="error" class="slds-m-right_x-small"></lightning-icon>
+                                <span>{sequentialError}</span>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={closeBandsModal}></lightning-button>
+                    <lightning-button
+                        label="Save &amp; Close"
+                        variant="brand"
+                        onclick={handleSaveBands}
+                        disabled={isBandsSaveDisabled}
+                        class="slds-m-left_small"
+                    ></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Assign to dashboard modal -->
+    <template if:true={isAssignModalOpen}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        variant="bare-inverse"
+                        class="slds-modal__close"
+                        onclick={closeAssignModal}
+                    ></lightning-button-icon>
+                    <h2 class="slds-modal__title slds-hyphenate">{assignModalTitle}</h2>
+                    <p class="slds-m-top_x-small slds-text-color_weak slds-text-body_small">
+                        Drag the setting card and drop it in the menu structure.
+                        Right-click the dashboard header or a top-level menu folder to add a menu item.
+                    </p>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_medium"
+                     style="min-height: 320px; position: relative; overflow-y: auto;"
+                     ondragover={handleTreeDragOver}>
+                    <div class="academic-year-bar slds-m-bottom_small">
+                        <lightning-combobox
+                            name="academicYear"
+                            label="Academic Year"
+                            value={selectedAcademicYear}
+                            options={academicYearOptions}
+                            onchange={handleAcademicYearChange}
+                            class="academic-year-combobox"
+                        ></lightning-combobox>
+                    </div>
+
+                    <template if:true={isTreeLoading}>
+                        <div class="slds-align_absolute-center" style="height: 200px;">
+                            <lightning-spinner alternative-text="Loading tree" size="medium"></lightning-spinner>
+                        </div>
+                    </template>
+
+                    <template if:false={isTreeLoading}>
+                        <template if:false={isPlaced}>
+                            <div class={dragCardClass}
+                                 draggable="true"
+                                 ondragstart={handleDragStart}
+                                 ondragend={handleDragEnd}>
+                                <lightning-icon icon-name="utility:drag_and_drop" size="x-small"
+                                    class="slds-m-right_small drag-icon"></lightning-icon>
+                                <span class="slds-text-body_regular slds-text-color_default">
+                                    {assignDragLabel}
+                                </span>
+                                <span class="slds-badge slds-badge_inverse slds-m-left_small">
+                                    Drag to place
+                                </span>
+                            </div>
+                        </template>
+                        <template if:true={isPlaced}>
+                            <div class="placed-banner slds-m-bottom_medium">
+                                <lightning-icon icon-name="utility:check" size="x-small"
+                                    class="slds-m-right_small" variant="success"></lightning-icon>
+                                <span>Placed successfully. Drag the tree row to move, or close.</span>
+                            </div>
+                        </template>
+
+                        <template if:true={hasTreeData}>
+                            <div class="tree-container"
+                                 ondragover={handleTreeDragOver}>
+                                <div class="tree-dashboard-header"
+                                     oncontextmenu={handleDashboardHeaderContextMenu}>
+                                    <lightning-icon icon-name="utility:dashboard" size="xx-small"
+                                        class="slds-m-right_x-small"></lightning-icon>
+                                    <span class="dashboard-header-label">
+                                        Dashboard &mdash; {selectedAssignRow.dbn}
+                                    </span>
+                                </div>
+                                <template for:each={flatTreeItems} for:item="item">
+                                    <div key={item.key}>
+                                        <template if:true={item.isDropZone}>
+                                            <div class={item.dropZoneClass}
+                                                 data-key={item.key}
+                                                 data-parent-id={item.parentId}
+                                                 data-target-level={item.targetLevel}
+                                                 data-prev-sort={item.prevSort}
+                                                 data-next-sort={item.nextSort}
+                                                 ondragover={handleDropZoneDragOver}
+                                                 ondragenter={handleDropZoneDragEnter}
+                                                 ondragleave={handleDropZoneDragLeave}
+                                                 ondrop={handleDropZoneDrop}>
+                                                <template if:true={item.isEmpty}>
+                                                    <span class="empty-label">Drop here</span>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <template if:true={item.isNode}>
+                                            <div class={item.nodeClass}
+                                                 data-id={item.id}
+                                                 data-level={item.level}
+                                                 data-label={item.label}
+                                                 data-parent-id={item.parentId}
+                                                 data-is-menu={item.isMenuStr}
+                                                 data-assessment-id={item.assessmentId}
+                                                 data-data-entry-id={item.dataEntryId}
+                                                 draggable={item.draggableStr}
+                                                 ondragstart={handleTreeItemDragStart}
+                                                 ondragenter={handleNodeDragEnter}
+                                                 ondragleave={handleNodeDragLeave}
+                                                 ondragend={handleDragEnd}
+                                                 oncontextmenu={handleTreeContextMenu}>
+                                                <template if:true={item.isMenu}>
+                                                    <button class="expand-btn"
+                                                            data-id={item.id}
+                                                            onclick={handleToggleExpand}>
+                                                        <lightning-icon icon-name={item.expandIcon}
+                                                            size="xx-small"></lightning-icon>
+                                                    </button>
+                                                </template>
+                                                <template if:false={item.isMenu}>
+                                                    <span class="page-icon-spacer">
+                                                        <lightning-icon icon-name="utility:page"
+                                                            size="xx-small"></lightning-icon>
+                                                    </span>
+                                                </template>
+                                                <span class={item.labelClass}>{item.label}</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <template if:true={showContextMenu}>
+                                <div class="ctx-backdrop" onclick={handleDismissContextMenu}></div>
+                                <div class="ctx-menu">
+                                    <template if:false={showNewItemInput}>
+                                        <button class="ctx-menu-item" onclick={handleContextAddItem}>
+                                            <lightning-icon icon-name="utility:add" size="xx-small"
+                                                class="slds-m-right_x-small"></lightning-icon>
+                                            {contextMenuLabel}
+                                        </button>
+                                    </template>
+                                    <template if:true={showNewItemInput}>
+                                        <div class="ctx-input-wrap">
+                                            <lightning-input
+                                                label="Item name"
+                                                variant="label-hidden"
+                                                placeholder={contextInputPlaceholder}
+                                                value={newItemName}
+                                                onchange={handleNewItemNameChange}
+                                                class="ctx-input">
+                                            </lightning-input>
+                                            <div class="ctx-input-actions">
+                                                <lightning-button label="Save" variant="brand"
+                                                    size="small" onclick={handleNewItemSave}
+                                                    disabled={isNewItemSaveDisabled}></lightning-button>
+                                                <lightning-button label="Cancel"
+                                                    size="small" onclick={handleNewItemCancel}></lightning-button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </template>
+                        <template if:false={hasTreeData}>
+                            <div class="slds-align_absolute-center slds-p-around_large">
+                                <p class="slds-text-body_regular slds-text-color_weak">
+                                    No dashboard structure found for this school.
+                                </p>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Close" onclick={closeAssignModal}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

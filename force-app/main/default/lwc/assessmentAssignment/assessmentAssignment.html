@@ -1,0 +1,277 @@
+<template>
+    <lightning-card title="Assign New Assessments to Dashboard" icon-name="standard:task2">
+        <div class="slds-p-around_medium">
+            <div class="slds-m-bottom_small">
+                <lightning-input
+                    type="search"
+                    label="Search assessments"
+                    variant="label-hidden"
+                    placeholder="Search by name, ID, or DBN..."
+                    value={searchTerm}
+                    onchange={handleSearch}
+                ></lightning-input>
+            </div>
+
+            <template if:true={isLoading}>
+                <div class="slds-align_absolute-center slds-p-around_large loading-container">
+                    <lightning-spinner alternative-text="Loading assessments" size="medium"></lightning-spinner>
+                    <p class="slds-m-top_medium slds-text-body_small slds-text-color_weak loading-text">
+                        Loading assessments&hellip;
+                    </p>
+                </div>
+            </template>
+            <template if:false={isLoading}>
+                <template if:true={hasAssessments}>
+                    <template if:true={hasFilteredResults}>
+                        <p class="slds-m-bottom_small slds-text-body_small slds-text-color_weak">
+                            {showingRange}
+                        </p>
+                        <div class="datatable-container">
+                            <lightning-datatable
+                                key-field="Id"
+                                data={paginatedAssessments}
+                                columns={columns}
+                                onrowaction={handleRowAction}
+                                onsort={handleSort}
+                                sorted-by={sortedBy}
+                                sorted-direction={sortDirection}
+                                hide-checkbox-column
+                            ></lightning-datatable>
+                        </div>
+
+                        <div class="pagination-bar slds-m-top_small">
+                            <div class="page-size-wrap">
+                                <span class="slds-text-body_small">Rows per page:</span>
+                                <lightning-combobox
+                                    label="Page size"
+                                    variant="label-hidden"
+                                    value={pageSizeValue}
+                                    options={pageSizeOptions}
+                                    onchange={handlePageSizeChange}
+                                    class="page-size-combo"
+                                ></lightning-combobox>
+                            </div>
+                            <span class="slds-text-body_small page-info">
+                                Page {currentPage} of {totalPages}
+                            </span>
+                            <div class="page-nav">
+                                <lightning-button-icon
+                                    icon-name="utility:chevronleft"
+                                    alternative-text="Previous page"
+                                    onclick={handlePrevPage}
+                                    disabled={isPrevDisabled}
+                                    variant="border-filled"
+                                    size="small"
+                                ></lightning-button-icon>
+                                <lightning-button-icon
+                                    icon-name="utility:chevronright"
+                                    alternative-text="Next page"
+                                    onclick={handleNextPage}
+                                    disabled={isNextDisabled}
+                                    variant="border-filled"
+                                    size="small"
+                                ></lightning-button-icon>
+                            </div>
+                        </div>
+                    </template>
+                    <template if:false={hasFilteredResults}>
+                        <div class="slds-align_absolute-center slds-p-around_large">
+                            <p class="slds-text-body_regular slds-text-color_weak">
+                                No records match your search.
+                            </p>
+                        </div>
+                    </template>
+                </template>
+                <template if:false={hasAssessments}>
+                    <div class="slds-align_absolute-center slds-p-around_large">
+                        <p class="slds-text-body_regular slds-text-color_weak">
+                            No recently added assessments found.
+                        </p>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+
+    <!-- Drag-and-drop assignment modal -->
+    <template if:true={isModalOpen}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        variant="bare-inverse"
+                        class="slds-modal__close"
+                        onclick={closeModal}
+                    ></lightning-button-icon>
+                    <h2 class="slds-modal__title slds-hyphenate">
+                        Assign Assessment to Dashboard
+                    </h2>
+                    <p class="slds-m-top_x-small slds-text-color_weak slds-text-body_small">
+                        Drag the assessment and drop it where you want it in the menu structure.
+                        Right-click a section to add a new menu item.
+                    </p>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_medium"
+                     style="min-height: 320px; position: relative; overflow-y: auto;"
+                     ondragover={handleTreeDragOver}>
+                    <div class="academic-year-bar slds-m-bottom_small">
+                        <lightning-combobox
+                            name="academicYear"
+                            label="Academic Year"
+                            value={selectedAcademicYear}
+                            options={academicYearOptions}
+                            onchange={handleAcademicYearChange}
+                            class="academic-year-combobox"
+                        ></lightning-combobox>
+                    </div>
+
+                    <template if:true={isTreeLoading}>
+                        <div class="slds-align_absolute-center" style="height: 200px;">
+                            <lightning-spinner alternative-text="Loading tree" size="medium"></lightning-spinner>
+                        </div>
+                    </template>
+
+                    <template if:false={isTreeLoading}>
+                        <!-- Draggable assessment card -->
+                        <template if:false={isPlaced}>
+                            <div class={dragCardClass}
+                                 draggable="true"
+                                 ondragstart={handleDragStart}
+                                 ondragend={handleDragEnd}>
+                                <lightning-icon icon-name="utility:drag_and_drop" size="x-small"
+                                    class="slds-m-right_small drag-icon"></lightning-icon>
+                                <span class="slds-text-body_regular slds-text-color_default">
+                                    {selectedAssessment.Assessment_Name__c}
+                                </span>
+                                <span class="slds-badge slds-badge_inverse slds-m-left_small">
+                                    Drag to place
+                                </span>
+                            </div>
+                        </template>
+                        <template if:true={isPlaced}>
+                            <div class="placed-banner slds-m-bottom_medium">
+                                <lightning-icon icon-name="utility:check" size="x-small"
+                                    class="slds-m-right_small" variant="success"></lightning-icon>
+                                <span>Assessment placed successfully. Drag it in the tree to reposition, or close.</span>
+                            </div>
+                        </template>
+
+                        <!-- Dashboard tree -->
+                        <template if:true={hasTreeData}>
+                            <div class="tree-container"
+                                 ondragover={handleTreeDragOver}>
+                                <!-- Dashboard header -->
+                                <div class="tree-dashboard-header"
+                                     oncontextmenu={handleDashboardHeaderContextMenu}>
+                                    <lightning-icon icon-name="utility:dashboard" size="xx-small"
+                                        class="slds-m-right_x-small"></lightning-icon>
+                                    <span class="dashboard-header-label">
+                                        Dashboard &mdash; {selectedAssessment.DBN__c}
+                                    </span>
+                                </div>
+                                <template for:each={flatTreeItems} for:item="item">
+                                    <div key={item.key}>
+                                        <template if:true={item.isDropZone}>
+                                            <div class={item.dropZoneClass}
+                                                 data-key={item.key}
+                                                 data-parent-id={item.parentId}
+                                                 data-target-level={item.targetLevel}
+                                                 data-prev-sort={item.prevSort}
+                                                 data-next-sort={item.nextSort}
+                                                 ondragover={handleDropZoneDragOver}
+                                                 ondragenter={handleDropZoneDragEnter}
+                                                 ondragleave={handleDropZoneDragLeave}
+                                                 ondrop={handleDropZoneDrop}>
+                                                <template if:true={item.isEmpty}>
+                                                    <span class="empty-label">Drop here</span>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <template if:true={item.isNode}>
+                                            <div class={item.nodeClass}
+                                                 data-id={item.id}
+                                                 data-level={item.level}
+                                                 data-label={item.label}
+                                                 data-parent-id={item.parentId}
+                                                 data-is-menu={item.isMenuStr}
+                                                 data-assessment-id={item.assessmentId}
+                                                 draggable={item.draggableStr}
+                                                 ondragstart={handleTreeItemDragStart}
+                                                 ondragenter={handleNodeDragEnter}
+                                                 ondragleave={handleNodeDragLeave}
+                                                 ondragend={handleDragEnd}
+                                                 oncontextmenu={handleTreeContextMenu}>
+                                                <template if:true={item.isMenu}>
+                                                    <button class="expand-btn"
+                                                            data-id={item.id}
+                                                            onclick={handleToggleExpand}>
+                                                        <lightning-icon icon-name={item.expandIcon}
+                                                            size="xx-small"></lightning-icon>
+                                                    </button>
+                                                </template>
+                                                <template if:false={item.isMenu}>
+                                                    <span class="page-icon-spacer">
+                                                        <lightning-icon icon-name="utility:page"
+                                                            size="xx-small"></lightning-icon>
+                                                    </span>
+                                                </template>
+                                                <span class={item.labelClass}>{item.label}</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Context menu -->
+                            <template if:true={showContextMenu}>
+                                <div class="ctx-backdrop" onclick={handleDismissContextMenu}></div>
+                                <div class="ctx-menu">
+                                    <template if:false={showNewItemInput}>
+                                        <button class="ctx-menu-item" onclick={handleContextAddItem}>
+                                            <lightning-icon icon-name="utility:add" size="xx-small"
+                                                class="slds-m-right_x-small"></lightning-icon>
+                                            {contextMenuLabel}
+                                        </button>
+                                    </template>
+                                    <template if:true={showNewItemInput}>
+                                        <div class="ctx-input-wrap">
+                                            <lightning-input
+                                                label="Item name"
+                                                variant="label-hidden"
+                                                placeholder={contextInputPlaceholder}
+                                                value={newItemName}
+                                                onchange={handleNewItemNameChange}
+                                                class="ctx-input">
+                                            </lightning-input>
+                                            <div class="ctx-input-actions">
+                                                <lightning-button label="Save" variant="brand"
+                                                    size="small" onclick={handleNewItemSave}
+                                                    disabled={isNewItemSaveDisabled}></lightning-button>
+                                                <lightning-button label="Cancel"
+                                                    size="small" onclick={handleNewItemCancel}></lightning-button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </template>
+                        <template if:false={hasTreeData}>
+                            <div class="slds-align_absolute-center slds-p-around_large">
+                                <p class="slds-text-body_regular slds-text-color_weak">
+                                    No dashboard structure found for this school.
+                                </p>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Close" onclick={closeModal}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

@@ -1,0 +1,1757 @@
+<!-- // testing code for pass offset and limit and get all ids also for select all -->
+<!-- Working code with all functionality tested. -->
+
+<!-- <template>
+    <lightning-card title="Mass Push Notification" icon-name="custom:custom63" class="slds-is-relative">
+
+        <template if:true={isLoading}>
+            <div
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1001; background: rgba(255, 255, 255, 0.7); display: flex; align-items: center; justify-content: center;">
+                <lightning-spinner alternative-text="Loading" size="large" variant="brand"></lightning-spinner>
+            </div>
+        </template>
+
+        <div class="slds-p-around_medium slds-theme_shade"
+            style="background: linear-gradient(135deg, #f8f9fb 0%, #e9ecef 100%); border-bottom: 2px solid #0176d3;">
+            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                <div class="slds-grid slds-grid_vertical-align-center">
+                    <span class="slds-badge slds-theme_info-inverse slds-m-right_x-small selected-badge">
+                        {selectedObjectLabel}
+                    </span>
+                    <lightning-combobox name="object" label="Switch Object" value={selectedObject}
+                        options={objectOptions} onchange={handleObjectChange} dropdown-length="2" style="width: 220px;">
+                    </lightning-combobox>
+                </div>
+                <div class="slds-grid slds-grid_vertical-align-center slds-m-right_large">
+                    <div class="slds-m-horizontal_medium slds-text-align_center">
+                        <div class="slds-text-heading_small" style="font-size: 20px; font-weight: 700; color: #333;">
+                            {selectedCount}
+                        </div>
+                        <div class="slds-text-body_small slds-text-color_weak">Selected</div>
+                    </div>
+                    <div class="slds-m-horizontal_medium slds-text-align_center">
+                        <div class="slds-text-heading_small" style="font-size: 20px; font-weight: 700; color: #666;">
+                            {totalRecords}
+                        </div>
+                        <div class="slds-text-body_small slds-text-color_weak">Available</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <template if:true={showFilterPanel}>
+            <section
+                class="slds-panel slds-size_medium slds-panel_docked slds-panel_docked-right slds-grid slds-grid_vertical"
+                style="position:fixed;top:333px;right:13px;z-index:1000;bottom:0;width:340px;background:white;box-shadow:-2px 0 8px #ddd;">
+                <div class="slds-panel__header slds-grid slds-grid_align-spread slds-p-around_small">
+                    <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate">Filters</h2>
+                    <lightning-button-icon icon-name="utility:close" alternative-text="Close" onclick={closeFilterPanel}
+                        variant="bare" class="slds-m-left_auto">
+                    </lightning-button-icon>
+                </div>
+                <div class="slds-panel__body slds-grid slds-grid_vertical slds-grow slds-p-around_small"
+                    style="overflow-y:auto; max-height: 36vh;">
+                    <ol>
+                        <template for:each={filterCriteria} for:item="filter" for:index="index">
+                            <li key={filter.id}
+                                class="slds-box slds-m-bottom_x-small slds-grid slds-grid_align-spread slds-theme_alert-texture"
+                                style="align-items:center;">
+                                <span style="word-break: break-word;">
+                                    <span class="slds-text-title">{filter.fieldLabel}</span>
+                                    <span class="slds-m-left_x-small">{filter.operator} {filter.value}</span>
+                                </span>
+                                <div class="slds-m-left_x-small">
+                                    <lightning-button-icon icon-name="utility:edit" onclick={editFilter}
+                                        data-index={index} alternative-text="Edit" class="slds-m-right_xx-small">
+                                    </lightning-button-icon>
+                                    <lightning-button-icon icon-name="utility:delete" onclick={removeFilter}
+                                        data-index={index} alternative-text="Remove">
+                                    </lightning-button-icon>
+                                </div>
+                            </li>
+                        </template>
+                    </ol>
+                    <div class="slds-grid slds-grid_align-spread slds-m-top_small slds-m-bottom_small">
+                        <a onclick={addFilter} class="slds-text-link" style="cursor:pointer;">Add Filter</a>
+                        <a onclick={removeAllFilters} class="slds-text-link" style="cursor:pointer;">Remove All</a>
+                    </div>
+                </div>
+            </section>
+        </template>
+
+        <template if:true={showFilterEditModal}>
+            <div class="filter-popover-anchor" onclick={handlePopoverBackgroundClick} tabindex="-1" aria-modal="true"
+                role="dialog">
+                <section class="slds-popover slds-popover_large filter-popover-custom"
+                    style="min-width:480px;max-width:98vw;outline:none;">
+                    <div class="slds-popover__body">
+                        <div class="slds-form slds-form_stacked">
+                            <div class="slds-form-element slds-m-bottom_medium">
+                                <lightning-combobox name="field" label="Field" value={editingFilter.field}
+                                    options={fieldOptions} onchange={handleEditFilterChange}>
+                                </lightning-combobox>
+                            </div>
+                            <div class="slds-form-element slds-m-bottom_medium">
+                                <lightning-combobox name="operator" label="Operator" value={editingFilter.operator}
+                                    options={operatorOptions} onchange={handleEditFilterChange}>
+                                </lightning-combobox>
+                            </div>
+                            <div class="slds-form-element slds-m-bottom_medium">
+                                <template if:true={editingFilter.valueOptions}>
+                                    <lightning-combobox name="value" label="Value" value={editingFilter.value}
+                                        options={editingFilter.valueOptions} onchange={handleEditFilterChange}>
+                                    </lightning-combobox>
+                                </template>
+                                <template if:false={editingFilter.valueOptions}>
+                                    <lightning-input name="value" label="Value" type="text" value={editingFilter.value}
+                                        onchange={handleEditFilterChange}>
+                                    </lightning-input>
+                                </template>
+                            </div>
+                            <div class="slds-m-top_medium slds-align_absolute-center">
+                                <lightning-button label="Cancel" onclick={closeEditFilterModal}
+                                    class="slds-m-right_small">
+                                </lightning-button>
+                                <lightning-button label="Save" variant="brand" onclick={saveEditFilter}>
+                                </lightning-button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </template>
+
+        <div class="slds-p-around_small">
+            <template if:true={visibleRecords.length}>
+                <div class="slds-grid slds-grid_align-end slds-m-bottom_x-small">
+                    <lightning-button label="Mass Push Notification" onclick={openNotificationModal}
+                        disabled={isPushDisabled} variant="brand" class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button-icon-stateful icon-name="utility:filterList" title="Filters"
+                        onclick={openFilterPanel} selected={showFilterPanel} variant="border-filled"
+                        class="listViewManagerHeaderButton secondaryDisplayButton filterButton"
+                        aria-pressed={showFilterPanel}>
+                    </lightning-button-icon-stateful>
+                </div>
+
+                <div class="slds-table_container"
+                    style="border: 1px solid #dddbda; border-radius: 0.25rem; max-height: 600px; overflow-y: auto;">
+                    <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed">
+                        <thead>
+                            <tr class="slds-text-heading_label">
+                                <th class="slds-text-align_center"
+                                    style="width: 3%; padding-left: 20px; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                </th>
+                                <th class="slds-text-align_center"
+                                    style="width: 3%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                    <lightning-input type="checkbox" checked={selectAll}
+                                        onchange={toggleSelectAll}></lightning-input>
+                                </th>
+                                <template if:true={isIOSObject}>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 24%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        School Name</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 22%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        App Name</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 22%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        App Icon</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 24%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        State</th>
+                                </template>
+                                <template if:true={isContactObject}>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 22%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Name</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 22%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Account</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 25%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Email</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 19%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        School DBN</th>
+                                </template>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={visibleRecordsWithRowNumber} for:item="record">
+                                <tr key={record.Id} class="slds-hint-parent">
+                                    <td class="slds-text-align_center slds-cell-fixed" style="color: #666;">
+                                        {record.rowNumber}</td>
+                                    <td class="slds-text-align_center slds-cell-fixed">
+                                        <lightning-input type="checkbox" data-id={record.Id} checked={record.isSelected}
+                                            onchange={handleCheckbox}></lightning-input>
+                                    </td>
+                                    <template if:true={isIOSObject}>
+                                        <td>
+                                            <a href="javascript:void(0);" onclick={handleSchoolNameClick}
+                                                data-record-id={record.School_App__c}
+                                                class="slds-truncate slds-text-link_reset" style="color: #0070d2;">
+                                                {record.School_Name__c}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.App_Name__c}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.App_Icon_Name__c}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.State__c}</div>
+                                        </td>
+                                    </template>
+                                    <template if:true={isContactObject}>
+                                        <td>
+                                            <div class="slds-truncate">{record.Name}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">
+                                                <template if:true={record.Account}>
+                                                    <a href="javascript:void(0);" data-id={record.Account.Id}
+                                                        onclick={handleAccountClick}>
+                                                        {record.Account.Name}
+                                                    </a>
+                                                </template>
+                                                <template if:false={record.Account}>
+                                                    No Account
+                                                </template>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.Email}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.School_DBN__c}</div>
+                                        </td>
+                                    </template>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                    <template if:true={isLoadingMore}>
+                        <div
+                            style="display: flex; justify-content: center; align-items: flex-end; width: 100%; padding: 2rem 0 0 0; position: absolute; bottom: 0px;">
+                            <div class="backgroundInverse">
+                                <lightning-spinner alternative-text="Loading more..." size="small"
+                                    variant="brand"></lightning-spinner>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <template if:false={visibleRecords.length}>
+                <div class="slds-grid slds-grid_align-end slds-m-bottom_x-small">
+                    <div class="slds-grid slds-grid_vertical-align-center">
+                        <lightning-button label="Mass Push Notification" onclick={openNotificationModal}
+                            disabled={isPushDisabled} variant="brand" class="slds-m-right_small">
+                        </lightning-button>
+                        <lightning-button-icon-stateful icon-name="utility:filterList" title="Filters"
+                            onclick={openFilterPanel} selected={showFilterPanel} variant="border-filled"
+                            class="listViewManagerHeaderButton secondaryDisplayButton filterButton"
+                            aria-pressed={showFilterPanel}>
+                        </lightning-button-icon-stateful>
+                    </div>
+                </div>
+                <div
+                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 256px; padding: 2rem 0;">
+                    <div class="slds-text-align_center slds-text-color_weak"
+                        style="font-size: 1.25rem; margin-bottom: 0.5rem;">No records found</div>
+                    <div class="slds-text-align_center slds-text-color_weak" style="font-size: 1rem;">There are no
+                        records to display. Try adjusting your filters or add new records.</div>
+                </div>
+            </template>
+        </div>
+
+        <template if:true={showIOSNotificationModal}>
+            <section class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container custom-modal">
+                    <header class="custom-header ios">
+                        <h2>Send Push Notification to Schools</h2>
+                    </header>
+                    <div class="slds-modal__content custom-body">
+                        <div class="field-block">
+                            <label class="custom-label">Title</label>
+                            <lightning-input type="text" value={iosNotificationTitle} onchange={handleIOSTitleChange}
+                                placeholder="Message title..." variant="label-hidden" required>
+                            </lightning-input>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Message</label>
+                            <lightning-textarea value={iosNotificationBody} onchange={handleIOSBodyChange}
+                                placeholder="Message description..." rows="5" variant="label-hidden" required>
+                            </lightning-textarea>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Image URL</label>
+                            <lightning-input type="text" value={iosNotificationImageUrl}
+                                onchange={handleIOSImageUrlChange} variant="label-hidden" placeholder="Image URL...">
+                            </lightning-input>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Launch URL</label>
+                            <lightning-input type="text" value={iosNotificationLaunchUrl}
+                                onchange={handleIOSLaunchUrlChange} variant="label-hidden" placeholder="Launch URL...">
+                            </lightning-input>
+                        </div>
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col">
+                                <label class="custom-label">Schedule Date</label>
+                                <lightning-input type="date" value={iosScheduledDate}
+                                    onchange={handleIOSScheduledDateChange} variant="label-hidden">
+                                </lightning-input>
+                            </div>
+                            <div class="slds-col">
+                                <label class="custom-label">Schedule Time</label>
+                                <lightning-input type="time" value={iosScheduledTime}
+                                    onchange={handleIOSScheduledTimeChange} variant="label-hidden">
+                                </lightning-input>
+                            </div>
+                        </div>
+                        <div class="field-block">
+                            <lightning-input type="checkbox" checked={iosIsPinChecked}
+                                onchange={handleIOSPinCheckboxChange} label="Pin Push Messages">
+                            </lightning-input>
+                        </div>
+                        <template if:true={iosIsPinChecked}>
+                            <div class="field-block">
+                                <label class="custom-label">Select Pin End Date</label>
+                                <p style="font-size: 12px; color: #666; margin-top: -10px;">
+                                    (Note: Pin will end at 11:59 PM EST on selected date)
+                                </p>
+                                <lightning-input type="date" value={iosPinEndDate} onchange={handleIOSPinEndDateChange}
+                                    variant="label-hidden" placeholder="Select a date">
+                                </lightning-input>
+                            </div>
+                        </template>
+
+                        <template if:true={isIOSModalLoading}>
+                            <div class="modal-loader-overlay">
+                                <div class="modal-loader-container">
+                                    <lightning-spinner alternative-text="Sending..." size="medium"
+                                        variant="brand"></lightning-spinner>
+                                    <p class="slds-m-top_small slds-text-color_weak">Sending notifications...</p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <footer class="custom-footer">
+                        <lightning-button label="Cancel" onclick={closeIOSNotificationModal} class="slds-m-right_small">
+                        </lightning-button>
+                        <lightning-button label="Send" variant="brand" onclick={sendIOSNotification}
+                            class="slds-m-right_small">
+                        </lightning-button>
+                        // <lightning-button label="Add Poll" variant="neutral" onclick={openIOSPollModal}></lightning-button> 
+                        <lightning-button label={pollButtonLabel} onclick={openIOSPollModal} variant="neutral"
+                            class="add-option-button">
+                        </lightning-button>
+
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <template if:true={showIOSPollModal}>
+            <section class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container" style="width: 720px; max-width: 90vw;">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium">Create Poll</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <div class="slds-form-element">
+                            <div class="slds-form-element__control">
+                                <label class="slds-form-element__label">
+                                    Poll Question <abbr class="slds-required" title="required">*</abbr>
+                                </label>
+                                <lightning-input type="text" value={pollQuestion} onchange={handlePollQuestionChange}
+                                    placeholder="Enter your poll question" variant="label-hidden" required>
+                                </lightning-input>
+                            </div>
+                        </div>
+                        <div class="slds-grid slds-gutters poll-options-container">
+                            <div class="slds-col">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label">
+                                        Options (Max 5)
+                                        <abbr class="slds-required" title="required">*</abbr>
+                                    </label>
+                                    <div class="slds-form-element__control">
+                                        <template for:each={pollOptions} for:item="option" for:index="index">
+                                            <div key={option.id} class="slds-grid slds-gutters poll-option-input">
+                                                <div class="slds-col slds-size_10-of-12">
+                                                    <lightning-input type="text" value={option.value}
+                                                        onchange={handlePollOptionChange} data-index={index}
+                                                        placeholder={option.placeholder} variant="label-hidden"
+                                                        required={option.isRequired}>
+                                                    </lightning-input>
+                                                </div>
+                                                <template if:true={option.canDelete}>
+                                                    <div class="slds-col slds-size_2-of-12 slds-align-middle">
+                                                        <lightning-button-icon icon-name="utility:delete"
+                                                            onclick={removePollOption} data-index={index}
+                                                            alternative-text="Remove option" variant="bare"
+                                                            class="remove-option-icon">
+                                                        </lightning-button-icon>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <lightning-button label="Add Option" onclick={addPollOption}
+                                            disabled={isAddOptionDisabled} variant="neutral" class="add-option-button">
+                                        </lightning-button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-col active-until-container">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label">
+                                        Active Until
+                                        <abbr class="slds-required" title="required">*</abbr>
+                                    </label>
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-grid slds-gutters">
+                                            <div class="slds-col">
+                                                <lightning-input type="date" value={pollEndDate}
+                                                    onchange={handlePollEndDateChange} required variant="label-hidden">
+                                                </lightning-input>
+                                            </div>
+                                            <div class="slds-col">
+                                                <lightning-input type="time" value={pollEndTime}
+                                                    onchange={handlePollEndTimeChange} required variant="label-hidden">
+                                                </lightning-input>
+                                            </div>
+                                        </div>
+                                        <div class="note-text">
+                                            (Note: Time Zone for poll is EST)
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Cancel" onclick={closeIOSPollModal} class="slds-button">
+                        </lightning-button>
+                        <lightning-button label="Save Poll" variant="brand" onclick={savePoll}
+                            disabled={isPollFormValid} class="slds-button">
+                        </lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <template if:true={showContactNotificationModal}>
+            <section class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container custom-modal">
+                    <header class="custom-header staff">
+                        <h2>Send Push Notification to Staff</h2>
+                    </header>
+                    <div class="slds-modal__content custom-body">
+                        <div class="field-block">
+                            <label class="custom-label ">Title</label>
+                            <lightning-input type="text" value={contactNotificationTitle}
+                                onchange={handleContactTitleChange} placeholder="Message title..."
+                                variant="label-hidden" required>
+                            </lightning-input>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label ">Message</label>
+                            <lightning-textarea value={contactNotificationBody} onchange={handleContactBodyChange}
+                                placeholder="Message description..." rows="5" variant="label-hidden" required>
+                            </lightning-textarea>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Image URL</label>
+                            <lightning-input type="text" value={contactNotificationImageUrl}
+                                onchange={handleContactImageUrlChange} placeholder="Image URL..."
+                                variant="label-hidden">
+                            </lightning-input>
+                        </div>
+                        <template if:true={isContactModalLoading}>
+                            <div class="modal-loader-overlay">
+                                <div class="modal-loader-container">
+                                    <lightning-spinner alternative-text="Sending..." size="medium"
+                                        variant="brand"></lightning-spinner>
+                                    <p class="slds-m-top_small slds-text-color_weak">Sending notifications...</p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                  ///////<footer class="custom-footer">
+                        <lightning-button label="Cancel" onclick={closeContactNotificationModal}
+                            class="slds-m-right_small">
+                        </lightning-button>
+                        <lightning-button label="Send" variant="brand" onclick={sendContactNotification}>
+                        </lightning-button>
+                    </footer>///////
+                    <footer class="custom-footer">
+                        <lightning-button label="Cancel" onclick={closeContactNotificationModal}
+                            class="slds-m-right_small">
+                        </lightning-button>
+                        <lightning-button label="Send" variant="brand" onclick={sendContactNotification}
+                            class="slds-m-right_small">
+                        </lightning-button>
+                    </footer>
+
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        ///////<template if:true={showSuccessModal}>
+            <div class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container" style="max-width: 400px;">
+                    <div class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium slds-text-align_center">Success</h2>
+                    </div>
+                    <div class="slds-modal__content slds-text-align_center slds-p-around_medium">
+                        <div class="success-icon-container slds-m-bottom_medium">
+                            <div class="dummy-positioning">
+                                <div class="wrapper-2"></div>
+                                <div class="success-icon">
+                                    <div class="wrapper"></div>
+                                    <div class="success-icon__tip"></div>
+                                    <div class="success-icon__long"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="success-message">
+                            <h1>Success</h1>
+                            <p>Notification has been sent successfully to {successRecordCount} records!</p>
+                        </div>
+                    </div>
+                    <div class="slds-modal__footer slds-text-align_center">
+                        <lightning-button label="OK" variant="brand" onclick={closeSuccessModal}
+                            class="slds-m-top_small">
+                        </lightning-button>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template> ///////
+
+    </lightning-card>
+</template> -->
+
+
+<!-- testing code for filter condition AND OR (working on 23-2-2026)-->
+
+<!-- <template>
+    <lightning-card title="Mass Push Notification" icon-name="custom:custom63" class="slds-is-relative">
+
+        <template if:true={isLoading}>
+            <div
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1001; background: rgba(255, 255, 255, 0.7); display: flex; align-items: center; justify-content: center;">
+                <lightning-spinner alternative-text="Loading" size="large" variant="brand"></lightning-spinner>
+            </div>
+        </template>
+
+        <div class="slds-p-around_medium slds-theme_shade"
+            style="background: linear-gradient(135deg, #f8f9fb 0%, #e9ecef 100%); border-bottom: 2px solid #0176d3;">
+            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                <div class="slds-grid slds-grid_vertical-align-center">
+                    <span class="slds-badge slds-theme_info-inverse slds-m-right_x-small selected-badge">
+                        {selectedObjectLabel}
+                    </span>
+                    <lightning-combobox name="object" label="Switch Object" value={selectedObject}
+                        options={objectOptions} onchange={handleObjectChange} dropdown-length="2" style="width: 220px;">
+                    </lightning-combobox>
+                </div>
+                <div class="slds-grid slds-grid_vertical-align-center slds-m-right_large">
+                    <div class="slds-m-horizontal_medium slds-text-align_center">
+                        <div class="slds-text-heading_small" style="font-size: 20px; font-weight: 700; color: #333;">
+                            {selectedCount}
+                        </div>
+                        <div class="slds-text-body_small slds-text-color_weak">Selected</div>
+                    </div>
+                    <div class="slds-m-horizontal_medium slds-text-align_center">
+                        <div class="slds-text-heading_small" style="font-size: 20px; font-weight: 700; color: #666;">
+                            {totalRecords}
+                        </div>
+                        <div class="slds-text-body_small slds-text-color_weak">Available</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <template if:true={showFilterPanel}>
+            <section
+                class="slds-panel slds-size_medium slds-panel_docked slds-panel_docked-right slds-grid slds-grid_vertical"
+                style="position:fixed;top:333px;right:13px;z-index:1000;bottom:0;width:340px;background:white;box-shadow:-2px 0 8px #ddd;">
+                <div class="slds-panel__header slds-grid slds-grid_align-spread slds-p-around_small">
+                    <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate">Filters</h2>
+                    <lightning-button-icon icon-name="utility:close" alternative-text="Close" onclick={closeFilterPanel}
+                        variant="bare" class="slds-m-left_auto">
+                    </lightning-button-icon>
+                </div>
+      
+                    <div class="slds-panel__body slds-grid slds-grid_vertical slds-grow slds-p-around_small custom-scroll-panel">
+                    <ol>
+                        <template for:each={filterCriteria} for:item="filter" for:index="index">
+                            <li key={filter.id}
+                                class="slds-box slds-m-bottom_x-small slds-grid slds-grid_align-spread slds-theme_alert-texture"
+                                style="align-items: center;">
+                                <span class="slds-badge slds-theme_info slds-badge_circular"
+                                    style="width: 20px; height: 20px; font-size: 12px; display: flex; align-items: center; justify-content: center;">
+                                    {index}
+                                </span>
+                                <span style="word-break: break-word;" class="slds-m-left_x-small">
+                                    <span class="slds-text-title">{filter.fieldLabel}</span>
+                                    <span class="slds-m-left_x-small">{filter.operator} {filter.value}</span>
+                                </span>
+                                <div class="slds-m-left_x-small">
+                                    <lightning-button-icon icon-name="utility:edit" onclick={editFilter}
+                                        data-index={index} alternative-text="Edit"
+                                        class="slds-m-right_xx-small"></lightning-button-icon>
+                                    <lightning-button-icon icon-name="utility:delete" onclick={removeFilter}
+                                        data-index={index} alternative-text="Remove"></lightning-button-icon>
+                                </div>
+                            </li>
+                        </template>
+                
+                        <template if:true={showCustomFilterLogic}>
+                            <div class="slds-m-top_small">
+                                <lightning-input type="text" label="Custom Filter Logic (e.g., 0 OR 1)"
+                                    value={customFilterLogic} onchange={handleCustomFilterLogicChange}
+                                    placeholder="Enter logic like (0 OR 1) AND 2">
+                                </lightning-input>
+                            </div>
+                        </template>
+
+                    </ol>
+                    <div class="slds-grid slds-grid_align-spread slds-m-top_small slds-m-bottom_small">
+                        <a onclick={addFilter} class="slds-text-link" style="cursor:pointer;">Add Filter</a>
+                        <a onclick={removeAllFilters} class="slds-text-link" style="cursor:pointer;">Remove All</a>
+                        <template if:true={showCustomFilterLogic}>
+                            <a onclick={saveCustomFilterLogic} class="slds-text-link" style="cursor:pointer;">Save
+                                Logic</a>
+                        </template>
+                    </div>
+                </div>
+            </section>
+        </template>
+
+        <template if:true={showFilterEditModal}>
+            <div class="filter-popover-anchor" onclick={handlePopoverBackgroundClick} tabindex="-1" aria-modal="true"
+                role="dialog">
+                <section class="slds-popover slds-popover_large filter-popover-custom"
+                    style="min-width:480px;max-width:98vw;outline:none;">
+                    <div class="slds-popover__body">
+                        <div class="slds-form slds-form_stacked">
+                            <div class="slds-form-element slds-m-bottom_medium">
+                                <lightning-combobox name="field" label="Field" value={editingFilter.field}
+                                    options={fieldOptions} onchange={handleEditFilterChange}>
+                                </lightning-combobox>
+                            </div>
+                            <div class="slds-form-element slds-m-bottom_medium">
+                                <lightning-combobox name="operator" label="Operator" value={editingFilter.operator}
+                                    options={operatorOptions} onchange={handleEditFilterChange}>
+                                </lightning-combobox>
+                            </div>
+                            <div class="slds-form-element slds-m-bottom_medium">
+                                <template if:true={editingFilter.valueOptions}>
+                                    <lightning-combobox name="value" label="Value" value={editingFilter.value}
+                                        options={editingFilter.valueOptions} onchange={handleEditFilterChange}>
+                                    </lightning-combobox>
+                                </template>
+                                <template if:false={editingFilter.valueOptions}>
+                                    <lightning-input name="value" label="Value" type="text" value={editingFilter.value}
+                                        onchange={handleEditFilterChange}>
+                                    </lightning-input>
+                                </template>
+                            </div>
+                            <div class="slds-m-top_medium slds-align_absolute-center">
+                                <lightning-button label="Cancel" onclick={closeEditFilterModal}
+                                    class="slds-m-right_small">
+                                </lightning-button>
+                                <lightning-button label="Save" variant="brand" onclick={saveEditFilter}>
+                                </lightning-button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </template>
+
+        <div class="slds-p-around_small">
+            <template if:true={visibleRecords.length}>
+                <div class="slds-grid slds-grid_align-end slds-m-bottom_x-small">
+                    <lightning-button label="Mass Push Notification" onclick={openNotificationModal}
+                        disabled={isPushDisabled} variant="brand" class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button-icon-stateful icon-name="utility:filterList" title="Filters"
+                        onclick={openFilterPanel} selected={showFilterPanel} variant="border-filled"
+                        class="listViewManagerHeaderButton secondaryDisplayButton filterButton"
+                        aria-pressed={showFilterPanel}>
+                    </lightning-button-icon-stateful>
+                </div>
+
+                <div class="slds-table_container"
+                    style="border: 1px solid #dddbda; border-radius: 0.25rem; max-height: 600px; overflow-y: auto;">
+                    <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed">
+                        <thead>
+                            <tr class="slds-text-heading_label">
+                                <th class="slds-text-align_center"
+                                    style="width: 3%; padding-left: 20px; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                </th>
+                                <th class="slds-text-align_center"
+                                    style="width: 3%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                    <lightning-input type="checkbox" checked={selectAll}
+                                        onchange={toggleSelectAll}></lightning-input>
+                                </th>
+                                <template if:true={isIOSObject}>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 24%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        School Name</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 22%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        App Name</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 22%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        App Icon</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 24%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        State</th>
+                                </template>
+                                <template if:true={isContactObject}>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 22%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Name</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 22%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Account</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 25%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Email</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 19%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        School DBN</th>
+                                </template>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={visibleRecordsWithRowNumber} for:item="record">
+                                <tr key={record.Id} class="slds-hint-parent">
+                                    <td class="slds-text-align_center slds-cell-fixed" style="color: #666;">
+                                        {record.rowNumber}</td>
+                                    <td class="slds-text-align_center slds-cell-fixed">
+                                        <lightning-input type="checkbox" data-id={record.Id} checked={record.isSelected}
+                                            onchange={handleCheckbox}></lightning-input>
+                                    </td>
+                                    <template if:true={isIOSObject}>
+                                        <td>
+                                            <a href="javascript:void(0);" onclick={handleSchoolNameClick}
+                                                data-record-id={record.School_App__c}
+                                                class="slds-truncate slds-text-link_reset" style="color: #0070d2;">
+                                                {record.School_Name__c}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.App_Name__c}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.App_Icon_Name__c}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.State__c}</div>
+                                        </td>
+                                    </template>
+                                    <template if:true={isContactObject}>
+                                        <td>
+                                            <div class="slds-truncate">{record.Name}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">
+                                                <template if:true={record.Account}>
+                                                    <a href="javascript:void(0);" data-id={record.Account.Id}
+                                                        onclick={handleAccountClick}>
+                                                        {record.Account.Name}
+                                                    </a>
+                                                </template>
+                                                <template if:false={record.Account}>
+                                                    No Account
+                                                </template>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.Email}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.School_DBN__c}</div>
+                                        </td>
+                                    </template>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                    <template if:true={isLoadingMore}>
+                        <div
+                            style="display: flex; justify-content: center; align-items: flex-end; width: 100%; padding: 2rem 0 0 0; position: absolute; bottom: 0px;">
+                            <div class="backgroundInverse">
+                                <lightning-spinner alternative-text="Loading more..." size="small"
+                                    variant="brand"></lightning-spinner>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <template if:false={visibleRecords.length}>
+                <div class="slds-grid slds-grid_align-end slds-m-bottom_x-small">
+                    <div class="slds-grid slds-grid_vertical-align-center">
+                        <lightning-button label="Mass Push Notification" onclick={openNotificationModal}
+                            disabled={isPushDisabled} variant="brand" class="slds-m-right_small">
+                        </lightning-button>
+                        <lightning-button-icon-stateful icon-name="utility:filterList" title="Filters"
+                            onclick={openFilterPanel} selected={showFilterPanel} variant="border-filled"
+                            class="listViewManagerHeaderButton secondaryDisplayButton filterButton"
+                            aria-pressed={showFilterPanel}>
+                        </lightning-button-icon-stateful>
+                    </div>
+                </div>
+                <div
+                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 256px; padding: 2rem 0;">
+                    <div class="slds-text-align_center slds-text-color_weak"
+                        style="font-size: 1.25rem; margin-bottom: 0.5rem;">No records found</div>
+                    <div class="slds-text-align_center slds-text-color_weak" style="font-size: 1rem;">There are no
+                        records to display. Try adjusting your filters or add new records.</div>
+                </div>
+            </template>
+        </div>
+
+        <template if:true={showIOSNotificationModal}>
+            <section class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container custom-modal">
+                    <header class="custom-header ios">
+                        <h2>Send Push Notification to Schools</h2>
+                    </header>
+                    <div class="slds-modal__content custom-body">
+                        <div class="field-block">
+                            <label class="custom-label">Title</label>
+                            <lightning-input type="text" value={iosNotificationTitle} onchange={handleIOSTitleChange}
+                                placeholder="Message title..." variant="label-hidden" required>
+                            </lightning-input>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Message</label>
+                            <lightning-textarea value={iosNotificationBody} onchange={handleIOSBodyChange}
+                                placeholder="Message description..." rows="5" variant="label-hidden" required>
+                            </lightning-textarea>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Image URL</label>
+                            <lightning-input type="text" value={iosNotificationImageUrl}
+                                onchange={handleIOSImageUrlChange} variant="label-hidden" placeholder="Image URL...">
+                            </lightning-input>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Launch URL</label>
+                            <lightning-input type="text" value={iosNotificationLaunchUrl}
+                                onchange={handleIOSLaunchUrlChange} variant="label-hidden" placeholder="Launch URL...">
+                            </lightning-input>
+                        </div>
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col">
+                                <label class="custom-label">Schedule Date</label>
+                                <lightning-input type="date" value={iosScheduledDate}
+                                    onchange={handleIOSScheduledDateChange} variant="label-hidden">
+                                </lightning-input>
+                            </div>
+                            <div class="slds-col">
+                                <label class="custom-label">Schedule Time</label>
+                                <lightning-input type="time" value={iosScheduledTime}
+                                    onchange={handleIOSScheduledTimeChange} variant="label-hidden">
+                                </lightning-input>
+                            </div>
+                        </div>
+                        <div class="field-block">
+                            <lightning-input type="checkbox" checked={iosIsPinChecked}
+                                onchange={handleIOSPinCheckboxChange} label="Pin Push Messages">
+                            </lightning-input>
+                        </div>
+                        <template if:true={iosIsPinChecked}>
+                            <div class="field-block">
+                                <label class="custom-label">Select Pin End Date</label>
+                                <p style="font-size: 12px; color: #666; margin-top: -10px;">
+                                    (Note: Pin will end at 11:59 PM EST on selected date)
+                                </p>
+                                <lightning-input type="date" value={iosPinEndDate} onchange={handleIOSPinEndDateChange}
+                                    variant="label-hidden" placeholder="Select a date">
+                                </lightning-input>
+                            </div>
+                        </template>
+
+                        <template if:true={isIOSModalLoading}>
+                            <div class="modal-loader-overlay">
+                                <div class="modal-loader-container">
+                                    <lightning-spinner alternative-text="Sending..." size="medium"
+                                        variant="brand"></lightning-spinner>
+                                    <p class="slds-m-top_small slds-text-color_weak">Sending notifications...</p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <footer class="custom-footer">
+                        <lightning-button label="Cancel" onclick={closeIOSNotificationModal} class="slds-m-right_small">
+                        </lightning-button>
+                        <lightning-button label="Send" variant="brand" onclick={sendIOSNotification}
+                            class="slds-m-right_small">
+                        </lightning-button>
+                        <lightning-button label={pollButtonLabel} onclick={openIOSPollModal} variant="neutral"
+                            class="add-option-button">
+                        </lightning-button>
+
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <template if:true={showIOSPollModal}>
+            <section class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container" style="width: 720px; max-width: 90vw;">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium">Create Poll</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <div class="slds-form-element">
+                            <div class="slds-form-element__control">
+                                <label class="slds-form-element__label">
+                                    Poll Question <abbr class="slds-required" title="required">*</abbr>
+                                </label>
+                                <lightning-input type="text" value={pollQuestion} onchange={handlePollQuestionChange}
+                                    placeholder="Enter your poll question" variant="label-hidden" required>
+                                </lightning-input>
+                            </div>
+                        </div>
+                        <div class="slds-grid slds-gutters poll-options-container">
+                            <div class="slds-col">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label">
+                                        Options (Max 5)
+                                        <abbr class="slds-required" title="required">*</abbr>
+                                    </label>
+                                    <div class="slds-form-element__control">
+                                        <template for:each={pollOptions} for:item="option" for:index="index">
+                                            <div key={option.id} class="slds-grid slds-gutters poll-option-input">
+                                                <div class="slds-col slds-size_10-of-12">
+                                                    <lightning-input type="text" value={option.value}
+                                                        onchange={handlePollOptionChange} data-index={index}
+                                                        placeholder={option.placeholder} variant="label-hidden"
+                                                        required={option.isRequired}>
+                                                    </lightning-input>
+                                                </div>
+                                                <template if:true={option.canDelete}>
+                                                    <div class="slds-col slds-size_2-of-12 slds-align-middle">
+                                                        <lightning-button-icon icon-name="utility:delete"
+                                                            onclick={removePollOption} data-index={index}
+                                                            alternative-text="Remove option" variant="bare"
+                                                            class="remove-option-icon">
+                                                        </lightning-button-icon>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <lightning-button label="Add Option" onclick={addPollOption}
+                                            disabled={isAddOptionDisabled} variant="neutral" class="add-option-button">
+                                        </lightning-button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-col active-until-container">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label">
+                                        Active Until
+                                        <abbr class="slds-required" title="required">*</abbr>
+                                    </label>
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-grid slds-gutters">
+                                            <div class="slds-col">
+                                                <lightning-input type="date" value={pollEndDate}
+                                                    onchange={handlePollEndDateChange} required variant="label-hidden">
+                                                </lightning-input>
+                                            </div>
+                                            <div class="slds-col">
+                                                <lightning-input type="time" value={pollEndTime}
+                                                    onchange={handlePollEndTimeChange} required variant="label-hidden">
+                                                </lightning-input>
+                                            </div>
+                                        </div>
+                                        <div class="note-text">
+                                            (Note: Time Zone for poll is EST)
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Cancel" onclick={closeIOSPollModal} class="slds-button">
+                        </lightning-button>
+                        <lightning-button label="Save Poll" variant="brand" onclick={savePoll}
+                            disabled={isPollFormValid} class="slds-button">
+                        </lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <template if:true={showContactNotificationModal}>
+            <section class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container custom-modal">
+                    <header class="custom-header staff">
+                        <h2>Send Push Notification to Staff</h2>
+                    </header>
+                    <div class="slds-modal__content custom-body">
+                        <div class="field-block">
+                            <label class="custom-label ">Title</label>
+                            <lightning-input type="text" value={contactNotificationTitle}
+                                onchange={handleContactTitleChange} placeholder="Message title..."
+                                variant="label-hidden" required>
+                            </lightning-input>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label ">Message</label>
+                            <lightning-textarea value={contactNotificationBody} onchange={handleContactBodyChange}
+                                placeholder="Message description..." rows="5" variant="label-hidden" required>
+                            </lightning-textarea>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Image URL</label>
+                            <lightning-input type="text" value={contactNotificationImageUrl}
+                                onchange={handleContactImageUrlChange} placeholder="Image URL..."
+                                variant="label-hidden">
+                            </lightning-input>
+                        </div>
+                        <template if:true={isContactModalLoading}>
+                            <div class="modal-loader-overlay">
+                                <div class="modal-loader-container">
+                                    <lightning-spinner alternative-text="Sending..." size="medium"
+                                        variant="brand"></lightning-spinner>
+                                    <p class="slds-m-top_small slds-text-color_weak">Sending notifications...</p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <footer class="custom-footer">
+                        <lightning-button label="Cancel" onclick={closeContactNotificationModal}
+                            class="slds-m-right_small">
+                        </lightning-button>
+                        <lightning-button label="Send" variant="brand" onclick={sendContactNotification}
+                            class="slds-m-right_small">
+                        </lightning-button>
+                    </footer>
+
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+    </lightning-card>
+</template> -->
+
+
+<!-- testing code for student and parent also -->
+
+<template>
+    <lightning-card title="Mass Push Notification" icon-name="custom:custom63" class="slds-is-relative">
+
+        <template if:true={isLoading}>
+            <div
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1001; background: rgba(255, 255, 255, 0.7); display: flex; align-items: center; justify-content: center;">
+                <lightning-spinner alternative-text="Loading" size="large" variant="brand"></lightning-spinner>
+            </div>
+        </template>
+
+        <div class="slds-p-around_medium slds-theme_shade"
+            style="background: linear-gradient(135deg, #f8f9fb 0%, #e9ecef 100%); border-bottom: 2px solid #0176d3;">
+            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                <div class="slds-grid slds-grid_vertical-align-center">
+                    <span class="slds-badge slds-theme_info-inverse slds-m-right_x-small selected-badge">
+                        {selectedObjectLabel}
+                    </span>
+                    <lightning-combobox name="object" label="Switch Object" value={selectedObject}
+                        options={objectOptions} onchange={handleObjectChange} dropdown-length="2" style="width: 220px;">
+                    </lightning-combobox>
+                </div>
+                <div class="slds-grid slds-grid_vertical-align-center slds-m-right_large">
+                    <div class="slds-m-horizontal_medium slds-text-align_center">
+                        <div class="slds-text-heading_small" style="font-size: 20px; font-weight: 700; color: #333;">
+                            {selectedCount}
+                        </div>
+                        <div class="slds-text-body_small slds-text-color_weak">Selected</div>
+                    </div>
+                    <div class="slds-m-horizontal_medium slds-text-align_center">
+                        <div class="slds-text-heading_small" style="font-size: 20px; font-weight: 700; color: #666;">
+                            {totalRecords}
+                        </div>
+                        <div class="slds-text-body_small slds-text-color_weak">Available</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <template if:true={showFilterPanel}>
+            <section
+                class="slds-panel slds-size_medium slds-panel_docked slds-panel_docked-right slds-grid slds-grid_vertical"
+                style="position:fixed;top:333px;right:13px;z-index:1000;bottom:0;width:340px;background:white;box-shadow:-2px 0 8px #ddd;">
+                <div class="slds-panel__header slds-grid slds-grid_align-spread slds-p-around_small">
+                    <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate">Filters</h2>
+                    <lightning-button-icon icon-name="utility:close" alternative-text="Close" onclick={closeFilterPanel}
+                        variant="bare" class="slds-m-left_auto">
+                    </lightning-button-icon>
+                </div>
+
+                <div
+                    class="slds-panel__body slds-grid slds-grid_vertical slds-grow slds-p-around_small custom-scroll-panel">
+                    <ol>
+                        <template for:each={filterCriteria} for:item="filter" for:index="index">
+                            <li key={filter.id}
+                                class="slds-box slds-m-bottom_x-small slds-grid slds-grid_align-spread slds-theme_alert-texture"
+                                style="align-items: center;">
+                                <span class="slds-badge slds-theme_info slds-badge_circular"
+                                    style="width: 20px; height: 20px; font-size: 12px; display: flex; align-items: center; justify-content: center;">
+                                    {index}
+                                </span>
+                                <span style="word-break: break-word;" class="slds-m-left_x-small">
+                                    <span class="slds-text-title">{filter.fieldLabel}</span>
+                                    <span class="slds-m-left_x-small">{filter.operator} {filter.value}</span>
+                                </span>
+                                <div class="slds-m-left_x-small">
+                                    <lightning-button-icon icon-name="utility:edit" onclick={editFilter}
+                                        data-index={index} alternative-text="Edit"
+                                        class="slds-m-right_xx-small"></lightning-button-icon>
+                                    <lightning-button-icon icon-name="utility:delete" onclick={removeFilter}
+                                        data-index={index} alternative-text="Remove"></lightning-button-icon>
+                                </div>
+                            </li>
+                        </template>
+
+                        <template if:true={showCustomFilterLogic}>
+                            <div class="slds-m-top_small">
+                                <lightning-input type="text" label="Custom Filter Logic (e.g., 0 OR 1)"
+                                    value={customFilterLogic} onchange={handleCustomFilterLogicChange}
+                                    placeholder="Enter logic like (0 OR 1) AND 2">
+                                </lightning-input>
+                            </div>
+                        </template>
+
+                    </ol>
+                    <div class="slds-grid slds-grid_align-spread slds-m-top_small slds-m-bottom_small">
+                        <a onclick={addFilter} class="slds-text-link" style="cursor:pointer;">Add Filter</a>
+                        <a onclick={removeAllFilters} class="slds-text-link" style="cursor:pointer;">Remove All</a>
+                        <template if:true={showCustomFilterLogic}>
+                            <a onclick={saveCustomFilterLogic} class="slds-text-link" style="cursor:pointer;">Save
+                                Logic</a>
+                        </template>
+                    </div>
+                </div>
+            </section>
+        </template>
+
+        <template if:true={showFilterEditModal}>
+            <div class="filter-popover-anchor" onclick={handlePopoverBackgroundClick} tabindex="-1" aria-modal="true"
+                role="dialog">
+                <section class="slds-popover slds-popover_large filter-popover-custom"
+                    style="min-width:480px;max-width:98vw;outline:none;">
+                    <div class="slds-popover__body">
+                        <div class="slds-form slds-form_stacked">
+                            <div class="slds-form-element slds-m-bottom_medium">
+                                <lightning-combobox name="field" label="Field" value={editingFilter.field}
+                                    options={fieldOptions} onchange={handleEditFilterChange}>
+                                </lightning-combobox>
+                            </div>
+                            <div class="slds-form-element slds-m-bottom_medium">
+                                <lightning-combobox name="operator" label="Operator" value={editingFilter.operator}
+                                    options={operatorOptions} onchange={handleEditFilterChange}>
+                                </lightning-combobox>
+                            </div>
+                            <div class="slds-form-element slds-m-bottom_medium">
+                                <template if:true={editingFilter.valueOptions}>
+                                    <lightning-combobox name="value" label="Value" value={editingFilter.value}
+                                        options={editingFilter.valueOptions} onchange={handleEditFilterChange}>
+                                    </lightning-combobox>
+                                </template>
+                                <template if:false={editingFilter.valueOptions}>
+                                    <lightning-input name="value" label="Value" type="text" value={editingFilter.value}
+                                        onchange={handleEditFilterChange}>
+                                    </lightning-input>
+                                </template>
+                            </div>
+                            <div class="slds-m-top_medium slds-align_absolute-center">
+                                <lightning-button label="Cancel" onclick={closeEditFilterModal}
+                                    class="slds-m-right_small">
+                                </lightning-button>
+                                <lightning-button label="Save" variant="brand" onclick={saveEditFilter}>
+                                </lightning-button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </template>
+
+        <div class="slds-p-around_small">
+            <template if:true={visibleRecords.length}>
+                <div class="slds-grid slds-grid_align-end slds-m-bottom_x-small">
+                    <lightning-button label="Mass Push Notification" onclick={openNotificationModal}
+                        disabled={isPushDisabled} variant="brand" class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button-icon-stateful icon-name="utility:filterList" title="Filters"
+                        onclick={openFilterPanel} selected={showFilterPanel} variant="border-filled"
+                        class="listViewManagerHeaderButton secondaryDisplayButton filterButton"
+                        aria-pressed={showFilterPanel}>
+                    </lightning-button-icon-stateful>
+                </div>
+
+                <div class="slds-table_container"
+                    style="border: 1px solid #dddbda; border-radius: 0.25rem; max-height: 600px; overflow-y: auto;">
+                    <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed">
+                        <thead>
+                            <tr class="slds-text-heading_label">
+                                <th class="slds-text-align_center"
+                                    style="width: 3%; padding-left: 20px; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                </th>
+                                <th class="slds-text-align_center"
+                                    style="width: 3%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                    <lightning-input type="checkbox" checked={selectAll}
+                                        onchange={toggleSelectAll}></lightning-input>
+                                </th>
+                                <template if:true={isIOSObject}>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 24%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        School Name</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 22%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        App Name</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 22%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        App Icon</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 24%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        State</th>
+                                </template>
+                                <template if:true={isContactObject}>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 22%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Name</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 22%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Account</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 25%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Email</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 19%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        School DBN</th>
+                                </template>
+
+                                <template if:true={isStudentObject}>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 25%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Student Full Name</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 25%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Email</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 20%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        DBN</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 20%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Grade</th>
+
+                                </template>
+
+                                <template if:true={isParentObject}>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 25%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Parent Name</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 25%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Student Name</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 20%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Phone</th>
+                                    <th class="slds-text-heading_label"
+                                        style="width: 20%; padding: 0.25rem; position: sticky; top: 0; background: #f3f3f3; z-index: 2;">
+                                        Relationship</th>
+                                </template>
+
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={visibleRecordsWithRowNumber} for:item="record">
+                                <tr key={record.Id} class="slds-hint-parent">
+                                    <td class="slds-text-align_center slds-cell-fixed" style="color: #666;">
+                                        {record.rowNumber}</td>
+                                    <td class="slds-text-align_center slds-cell-fixed">
+                                        <lightning-input type="checkbox" data-id={record.Id} checked={record.isSelected}
+                                            onchange={handleCheckbox}></lightning-input>
+                                    </td>
+
+                                    <template if:true={isIOSObject}>
+                                        <td>
+                                            <a href="javascript:void(0);" onclick={handleSchoolNameClick}
+                                                data-record-id={record.School_App__c}
+                                                class="slds-truncate slds-text-link_reset" style="color: #0070d2;">
+                                                {record.School_Name__c}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.App_Name__c}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.App_Icon_Name__c}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.State__c}</div>
+                                        </td>
+                                    </template>
+
+                                    <template if:true={isContactObject}>
+                                        <td>
+                                            <div class="slds-truncate">{record.Name}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">
+                                                <template if:true={record.Account}>
+                                                    <a href="javascript:void(0);" data-id={record.Account.Id}
+                                                        onclick={handleAccountClick}>
+                                                        {record.Account.Name}
+                                                    </a>
+                                                </template>
+                                                <template if:false={record.Account}>
+                                                    No Account
+                                                </template>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.Email}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.School_DBN__c}</div>
+                                        </td>
+                                    </template>
+
+
+                                    <!-- <template if:true={isStudentObject}>
+                                        <td>
+                                            <div class="slds-truncate">{record.Full_Name__c}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.Email__c}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.DBN__c}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.Grade__c}</div>
+                                        </td>
+
+                                    </template> -->
+
+                                    <template if:true={isStudentObject}>
+                                        <td>
+                                            <a href="javascript:void(0);" onclick={handleStudentClick}
+                                                data-record-id={record.Id} class="slds-truncate slds-text-link_reset"
+                                                style="color: #0070d2;">
+                                                {record.Full_Name__c}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.Email__c}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.DBN__c}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.Grade__c}</div>
+                                        </td>
+                                    </template>
+
+                                    <template if:true={isParentObject}>
+                                        <td>
+                                            <div class="slds-truncate">{record.Parent_name__c}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.Student_Name__c}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.Phone__c}</div>
+                                        </td>
+                                        <td>
+                                            <div class="slds-truncate">{record.Parent_Student_Relationship__c}</div>
+                                        </td>
+                                    </template>
+
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                    <template if:true={isLoadingMore}>
+                        <div
+                            style="display: flex; justify-content: center; align-items: flex-end; width: 100%; padding: 2rem 0 0 0; position: absolute; bottom: 0px;">
+                            <div class="backgroundInverse">
+                                <lightning-spinner alternative-text="Loading more..." size="small"
+                                    variant="brand"></lightning-spinner>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <template if:false={visibleRecords.length}>
+                <div class="slds-grid slds-grid_align-end slds-m-bottom_x-small">
+                    <div class="slds-grid slds-grid_vertical-align-center">
+                        <lightning-button label="Mass Push Notification" onclick={openNotificationModal}
+                            disabled={isPushDisabled} variant="brand" class="slds-m-right_small">
+                        </lightning-button>
+                        <lightning-button-icon-stateful icon-name="utility:filterList" title="Filters"
+                            onclick={openFilterPanel} selected={showFilterPanel} variant="border-filled"
+                            class="listViewManagerHeaderButton secondaryDisplayButton filterButton"
+                            aria-pressed={showFilterPanel}>
+                        </lightning-button-icon-stateful>
+                    </div>
+                </div>
+                <div
+                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 256px; padding: 2rem 0;">
+                    <div class="slds-text-align_center slds-text-color_weak"
+                        style="font-size: 1.25rem; margin-bottom: 0.5rem;">No records found</div>
+                    <div class="slds-text-align_center slds-text-color_weak" style="font-size: 1rem;">There are no
+                        records to display. Try adjusting your filters or add new records.</div>
+                </div>
+            </template>
+        </div>
+
+        <template if:true={showIOSNotificationModal}>
+            <section class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container custom-modal">
+                    <header class="custom-header ios">
+                        <h2>Send Push Notification to Schools</h2>
+                    </header>
+                    <div class="slds-modal__content custom-body">
+                        <div class="field-block">
+                            <label class="custom-label">Title</label>
+                            <lightning-input type="text" value={iosNotificationTitle} onchange={handleIOSTitleChange}
+                                placeholder="Message title..." variant="label-hidden" required>
+                            </lightning-input>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Message</label>
+                            <lightning-textarea value={iosNotificationBody} onchange={handleIOSBodyChange}
+                                placeholder="Message description..." rows="5" variant="label-hidden" required>
+                            </lightning-textarea>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Image URL</label>
+                            <lightning-input type="text" value={iosNotificationImageUrl}
+                                onchange={handleIOSImageUrlChange} variant="label-hidden" placeholder="Image URL...">
+                            </lightning-input>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Launch URL</label>
+                            <lightning-input type="text" value={iosNotificationLaunchUrl}
+                                onchange={handleIOSLaunchUrlChange} variant="label-hidden" placeholder="Launch URL...">
+                            </lightning-input>
+                        </div>
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col">
+                                <label class="custom-label">Schedule Date</label>
+                                <lightning-input type="date" value={iosScheduledDate}
+                                    onchange={handleIOSScheduledDateChange} variant="label-hidden">
+                                </lightning-input>
+                            </div>
+                            <div class="slds-col">
+                                <label class="custom-label">Schedule Time</label>
+                                <lightning-input type="time" value={iosScheduledTime}
+                                    onchange={handleIOSScheduledTimeChange} variant="label-hidden">
+                                </lightning-input>
+                            </div>
+                        </div>
+                        <div class="field-block">
+                            <lightning-input type="checkbox" checked={iosIsPinChecked}
+                                onchange={handleIOSPinCheckboxChange} label="Pin Push Messages">
+                            </lightning-input>
+                        </div>
+                        <template if:true={iosIsPinChecked}>
+                            <div class="field-block">
+                                <label class="custom-label">Select Pin End Date</label>
+                                <p style="font-size: 12px; color: #666; margin-top: -10px;">
+                                    (Note: Pin will end at 11:59 PM EST on selected date)
+                                </p>
+                                <lightning-input type="date" value={iosPinEndDate} onchange={handleIOSPinEndDateChange}
+                                    variant="label-hidden" placeholder="Select a date">
+                                </lightning-input>
+                            </div>
+                        </template>
+
+                        <template if:true={isIOSModalLoading}>
+                            <div class="modal-loader-overlay">
+                                <div class="modal-loader-container">
+                                    <lightning-spinner alternative-text="Sending..." size="medium"
+                                        variant="brand"></lightning-spinner>
+                                    <p class="slds-m-top_small slds-text-color_weak">Sending notifications...</p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <footer class="custom-footer">
+                        <lightning-button label="Cancel" onclick={closeIOSNotificationModal} class="slds-m-right_small">
+                        </lightning-button>
+                        <lightning-button label="Send" variant="brand" onclick={sendIOSNotification}
+                            class="slds-m-right_small">
+                        </lightning-button>
+                        <lightning-button label={pollButtonLabel} onclick={openIOSPollModal} variant="neutral"
+                            class="add-option-button">
+                        </lightning-button>
+
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <template if:true={showIOSPollModal}>
+            <section class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container" style="width: 720px; max-width: 90vw;">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium">Create Poll</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <div class="slds-form-element">
+                            <div class="slds-form-element__control">
+                                <label class="slds-form-element__label">
+                                    Poll Question <abbr class="slds-required" title="required">*</abbr>
+                                </label>
+                                <lightning-input type="text" value={pollQuestion} onchange={handlePollQuestionChange}
+                                    placeholder="Enter your poll question" variant="label-hidden" required>
+                                </lightning-input>
+                            </div>
+                        </div>
+                        <div class="slds-grid slds-gutters poll-options-container">
+                            <div class="slds-col">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label">
+                                        Options (Max 5)
+                                        <abbr class="slds-required" title="required">*</abbr>
+                                    </label>
+                                    <div class="slds-form-element__control">
+                                        <template for:each={pollOptions} for:item="option" for:index="index">
+                                            <div key={option.id} class="slds-grid slds-gutters poll-option-input">
+                                                <div class="slds-col slds-size_10-of-12">
+                                                    <lightning-input type="text" value={option.value}
+                                                        onchange={handlePollOptionChange} data-index={index}
+                                                        placeholder={option.placeholder} variant="label-hidden"
+                                                        required={option.isRequired}>
+                                                    </lightning-input>
+                                                </div>
+                                                <template if:true={option.canDelete}>
+                                                    <div class="slds-col slds-size_2-of-12 slds-align-middle">
+                                                        <lightning-button-icon icon-name="utility:delete"
+                                                            onclick={removePollOption} data-index={index}
+                                                            alternative-text="Remove option" variant="bare"
+                                                            class="remove-option-icon">
+                                                        </lightning-button-icon>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <lightning-button label="Add Option" onclick={addPollOption}
+                                            disabled={isAddOptionDisabled} variant="neutral" class="add-option-button">
+                                        </lightning-button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-col active-until-container">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label">
+                                        Active Until
+                                        <abbr class="slds-required" title="required">*</abbr>
+                                    </label>
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-grid slds-gutters">
+                                            <div class="slds-col">
+                                                <lightning-input type="date" value={pollEndDate}
+                                                    onchange={handlePollEndDateChange} required variant="label-hidden">
+                                                </lightning-input>
+                                            </div>
+                                            <div class="slds-col">
+                                                <lightning-input type="time" value={pollEndTime}
+                                                    onchange={handlePollEndTimeChange} required variant="label-hidden">
+                                                </lightning-input>
+                                            </div>
+                                        </div>
+                                        <div class="note-text">
+                                            (Note: Time Zone for poll is EST)
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Cancel" onclick={closeIOSPollModal} class="slds-button">
+                        </lightning-button>
+                        <lightning-button label="Save Poll" variant="brand" onclick={savePoll}
+                            disabled={isPollFormValid} class="slds-button">
+                        </lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <template if:true={showContactNotificationModal}>
+            <section class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container custom-modal">
+                    <header class="custom-header staff">
+                        <h2>Send Push Notification to Staff</h2>
+                    </header>
+                    <div class="slds-modal__content custom-body">
+                        <div class="field-block">
+                            <label class="custom-label ">Title</label>
+                            <lightning-input type="text" value={contactNotificationTitle}
+                                onchange={handleContactTitleChange} placeholder="Message title..."
+                                variant="label-hidden" required>
+                            </lightning-input>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label ">Message</label>
+                            <lightning-textarea value={contactNotificationBody} onchange={handleContactBodyChange}
+                                placeholder="Message description..." rows="5" variant="label-hidden" required>
+                            </lightning-textarea>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Image URL</label>
+                            <lightning-input type="text" value={contactNotificationImageUrl}
+                                onchange={handleContactImageUrlChange} placeholder="Image URL..."
+                                variant="label-hidden">
+                            </lightning-input>
+                        </div>
+                        <template if:true={isContactModalLoading}>
+                            <div class="modal-loader-overlay">
+                                <div class="modal-loader-container">
+                                    <lightning-spinner alternative-text="Sending..." size="medium"
+                                        variant="brand"></lightning-spinner>
+                                    <p class="slds-m-top_small slds-text-color_weak">Sending notifications...</p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <footer class="custom-footer">
+                        <lightning-button label="Cancel" onclick={closeContactNotificationModal}
+                            class="slds-m-right_small">
+                        </lightning-button>
+                        <lightning-button label="Send" variant="brand" onclick={sendContactNotification}
+                            class="slds-m-right_small">
+                        </lightning-button>
+                    </footer>
+
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <template if:true={showStudentNotificationModal}>
+            <section class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container custom-modal">
+                    <header class="custom-header student">
+                        <h2>Send Push Notification to Students</h2>
+                    </header>
+                    <div class="slds-modal__content custom-body">
+                        <div class="field-block">
+                            <label class="custom-label">Title</label>
+                            <lightning-input type="text" value={studentNotificationTitle}
+                                onchange={handleStudentTitleChange} placeholder="Message title..."
+                                variant="label-hidden" required>
+                            </lightning-input>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Message</label>
+                            <lightning-textarea value={studentNotificationBody} onchange={handleStudentBodyChange}
+                                placeholder="Message description..." rows="5" variant="label-hidden" required>
+                            </lightning-textarea>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Image URL</label>
+                            <lightning-input type="text" value={studentNotificationImageUrl}
+                                onchange={handleStudentImageUrlChange} placeholder="Image URL..."
+                                variant="label-hidden">
+                            </lightning-input>
+                        </div>
+                        <template if:true={isStudentModalLoading}>
+                            <div class="modal-loader-overlay">
+                                <div class="modal-loader-container">
+                                    <lightning-spinner alternative-text="Sending..." size="medium"
+                                        variant="brand"></lightning-spinner>
+                                    <p class="slds-m-top_small slds-text-color_weak">Sending notifications...</p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <footer class="custom-footer">
+                        <lightning-button label="Cancel" onclick={closeStudentNotificationModal}
+                            class="slds-m-right_small">
+                        </lightning-button>
+                        <lightning-button label="Send" variant="brand" onclick={sendStudentNotification}>
+                        </lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <template if:true={showParentNotificationModal}>
+            <section class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container custom-modal">
+                    <header class="custom-header parent">
+                        <h2>Send Push Notification to Parents</h2>
+                    </header>
+                    <div class="slds-modal__content custom-body">
+                        <div class="field-block">
+                            <label class="custom-label">Title</label>
+                            <lightning-input type="text" value={parentNotificationTitle}
+                                onchange={handleParentTitleChange} placeholder="Message title..." variant="label-hidden"
+                                required>
+                            </lightning-input>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Message</label>
+                            <lightning-textarea value={parentNotificationBody} onchange={handleParentBodyChange}
+                                placeholder="Message description..." rows="5" variant="label-hidden" required>
+                            </lightning-textarea>
+                        </div>
+                        <div class="field-block">
+                            <label class="custom-label">Image URL</label>
+                            <lightning-input type="text" value={parentNotificationImageUrl}
+                                onchange={handleParentImageUrlChange} placeholder="Image URL..."
+                                variant="label-hidden">
+                            </lightning-input>
+                        </div>
+                        <template if:true={isParentModalLoading}>
+                            <div class="modal-loader-overlay">
+                                <div class="modal-loader-container">
+                                    <lightning-spinner alternative-text="Sending..." size="medium"
+                                        variant="brand"></lightning-spinner>
+                                    <p class="slds-m-top_small slds-text-color_weak">Sending notifications...</p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <footer class="custom-footer">
+                        <lightning-button label="Cancel" onclick={closeParentNotificationModal}
+                            class="slds-m-right_small">
+                        </lightning-button>
+                        <lightning-button label="Send" variant="brand" onclick={sendParentNotification}>
+                        </lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+    </lightning-card>
+</template>

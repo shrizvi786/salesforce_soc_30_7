@@ -1,0 +1,177 @@
+.modal-wide {
+    max-width: 780px !important;
+    width: 92%;
+}
+.modal-content-no-scroll {
+    max-height: none !important;
+    overflow: visible !important;
+}
+.assessment-info {
+    background: #f4f6f9;
+    padding: 0.875rem 1.25rem;
+    border-radius: 0.5rem;
+}
+.info-block {
+    padding: 0.25rem 0;
+}
+.info-label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #706e6b;
+    margin-bottom: 0.15rem;
+}
+.info-value {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #181818;
+}
+.levels-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+}
+.level-card {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 0.625rem;
+    transition: box-shadow 0.2s;
+    position: relative;
+}
+.level-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.remove-corner-btn {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    background: #c62828;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 2;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    padding: 0;
+}
+.level-card:hover .remove-corner-btn {
+    opacity: 1;
+    transform: scale(1);
+}
+.level-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-right: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    cursor: default;
+}
+.badge-number {
+    display: block;
+}
+.badge-remove {
+    display: none;
+    font-size: 1.3rem;
+    line-height: 1;
+}
+.level-card:hover .level-badge[data-level='5'] {
+    cursor: pointer;
+    background-color: #c62828 !important;
+    transform: scale(1.08);
+}
+.level-card:hover .level-badge[data-level='5'] .badge-number {
+    display: none;
+}
+.level-card:hover .level-badge[data-level='5'] .badge-remove {
+    display: block;
+}
+.level-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+.level-label-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #181818;
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    border: 1px dashed transparent;
+}
+.level-label-text:hover {
+    border-color: #b0b0b0;
+    background-color: rgba(0, 0, 0, 0.03);
+}
+.inline-name-input {
+    width: 160px;
+}
+.level-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+.input-prefix,
+.input-suffix {
+    font-size: 0.85rem;
+    color: #444;
+}
+.value-input {
+    width: 72px;
+}
+.level-color-group {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    flex-shrink: 0;
+}
+.color-swatch {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #d8d8d8;
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 2px;
+    background: transparent;
+}
+.hex-input {
+    width: 88px;
+}
+.add-level-container {
+    text-align: center;
+    padding: 0.5rem 0;
+}
+.validation-error {
+    display: flex;
+    align-items: center;
+    background: #fef0ef;
+    border: 1px solid #ea001e;
+    border-radius: 0.375rem;
+    padding: 0.625rem 0.875rem;
+    color: #ba0517;
+    font-size: 0.85rem;
+    font-weight: 500;
+}

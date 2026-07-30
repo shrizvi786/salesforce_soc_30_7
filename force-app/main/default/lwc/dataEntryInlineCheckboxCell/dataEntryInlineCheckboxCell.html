@@ -1,0 +1,12 @@
+<template>
+    <div class="hmh-cb-cell" title="Click to toggle">
+        <lightning-input
+            type="checkbox"
+            checked={checked}
+            disabled={isDisabled}
+            variant="label-hidden"
+            label={ariaLabel}
+            onchange={handleChange}
+        ></lightning-input>
+    </div>
+</template>

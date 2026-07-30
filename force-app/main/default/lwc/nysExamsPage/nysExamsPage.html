@@ -1,0 +1,56 @@
+<template>
+    <lightning-card title="NYS Exams — Show/Hide Pages" icon-name="standard:report">
+        <div class="slds-p-around_medium">
+            <template if:true={isLoadingRows}>
+                <div class="slds-align_absolute-center slds-p-around_large">
+                    <lightning-spinner alternative-text="Loading sections" size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <template if:false={isLoadingRows}>
+                <div class="slds-m-bottom_small">
+                    <lightning-input
+                        type="search"
+                        label="Search by DBN"
+                        variant="label-hidden"
+                        placeholder="Search by DBN..."
+                        value={searchTerm}
+                        onchange={handleSearch}
+                    ></lightning-input>
+                </div>
+
+                <template if:true={hasRows}>
+                    <p class="slds-m-bottom_small slds-text-body_small slds-text-color_weak">
+                        {showingRange}
+                    </p>
+                    <div class="datatable-container">
+                        <c-nys-exams-datatable
+                            key={datatableRenderKey}
+                            key-field="sectionId"
+                            data={rows}
+                            columns={columns}
+                            onsort={handleSort}
+                            sorted-by={datatableSortedBy}
+                            sorted-direction={sortDirection}
+                            hide-checkbox-column
+                            onsectionhidechange={handleSectionHideChange}
+                        ></c-nys-exams-datatable>
+                    </div>
+                </template>
+
+                <template if:false={hasRows}>
+                    <div class="slds-align_absolute-center slds-p-around_large">
+                        <p class="slds-text-body_regular slds-text-color_weak">
+                            <template if:true={isSearchActive}>
+                                No sections match your DBN search.
+                            </template>
+                            <template if:false={isSearchActive}>
+                                No NYS Exams dashboard sections found.
+                            </template>
+                        </p>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+</template>

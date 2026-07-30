@@ -1,0 +1,313 @@
+/* ── Academic year selector ── */
+.academic-year-bar {
+    display: flex;
+    justify-content: flex-end;
+}
+.academic-year-combobox {
+    width: 11rem;
+}
+
+/* ── Loading spinner ── */
+.loading-container {
+    flex-direction: column;
+    min-height: 200px;
+}
+.loading-text {
+    margin-top: 1rem;
+}
+
+/* ── Datatable scroll container ── */
+.datatable-container {
+    max-height: 600px;
+    overflow-y: auto;
+    border: 1px solid #e5e5e5;
+    border-radius: 0.25rem;
+}
+
+/* ── Pagination bar ── */
+.pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    flex-wrap: wrap;
+}
+.page-size-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+.page-size-combo {
+    width: 80px;
+}
+.page-info {
+    color: #706e6b;
+}
+.page-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* ── Drag card ── */
+.drag-card {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+    background-color: #eef4ff;
+    border: 2px solid #0176d3;
+    border-radius: 0.5rem;
+    cursor: grab;
+    user-select: none;
+    transition: opacity 0.2s, transform 0.15s;
+}
+.drag-card:active {
+    cursor: grabbing;
+}
+.drag-card-dragging {
+    opacity: 0.45;
+    transform: scale(0.97);
+}
+
+/* ── Placed banner ── */
+.placed-banner {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    background-color: #e6f9e6;
+    border: 1px solid #2e844a;
+    border-radius: 0.5rem;
+    color: #2e844a;
+}
+
+/* ── Tree container ── */
+.tree-container {
+    border: 1px solid #d8dde6;
+    border-radius: 0.375rem;
+    background: #fff;
+    max-height: 450px;
+    overflow-y: auto;
+    padding: 0.25rem 0;
+    scroll-behavior: auto;
+}
+
+/* ── Dashboard header ── */
+.tree-dashboard-header {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background-color: #f4f6f9;
+    border-bottom: 1px solid #d8dde6;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    color: #3e3e3c;
+    cursor: context-menu;
+    user-select: none;
+}
+.dashboard-header-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Tree nodes ── */
+.tree-node {
+    display: flex;
+    align-items: center;
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+    margin: 0 0.25rem;
+    border-radius: 0.25rem;
+    min-height: 2rem;
+    cursor: grab;
+    transition: background-color 0.12s;
+}
+
+/* ── Indentation levels (after tree-node so they win) ── */
+.indent-1 { padding-left: 24px; }
+.indent-2 { padding-left: 48px; }
+.indent-3 { padding-left: 72px; }
+.indent-4 { padding-left: 96px; }
+.tree-node:active {
+    cursor: grabbing;
+}
+.tree-node:hover {
+    background-color: #f3f3f3;
+}
+.tree-node-folder {
+    font-weight: 600;
+}
+.tree-node-assessment {
+    background-color: #eef4ff;
+    border-left: 3px solid #0176d3;
+    cursor: grab;
+}
+.tree-node-assessment:hover {
+    background-color: #d8ebff;
+}
+.tree-node-assessment:active {
+    cursor: grabbing;
+}
+
+/* ── Expand button ── */
+.expand-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 0.25rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 0.25rem;
+    flex-shrink: 0;
+}
+.expand-btn:hover {
+    background-color: #e5e5e5;
+}
+
+/* ── Page icon spacer (aligns with expand button) ── */
+.page-icon-spacer {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 0.25rem;
+    flex-shrink: 0;
+}
+
+/* ── Labels ── */
+.node-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.8125rem;
+}
+.folder-label {
+    font-weight: 600;
+}
+
+/* ── Assessment badge ── */
+.assessment-badge {
+    font-size: 0.625rem;
+    background-color: #0176d3;
+    color: #fff;
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.25rem;
+    flex-shrink: 0;
+}
+
+/* ── Drop zones ── */
+.drop-zone {
+    height: 3px;
+    margin: 0 0.5rem;
+    border-radius: 2px;
+    transition: height 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* When the tree is in drag mode, make drop zones slightly visible */
+.tree-container.is-dragging .drop-zone {
+    height: 4px;
+    background-color: #e8e8e8;
+}
+
+/* Active (hovered) drop zone */
+.drop-zone.drop-zone-active,
+.tree-container.is-dragging .drop-zone.drop-zone-active {
+    height: 6px;
+    background-color: #0176d3;
+    box-shadow: 0 0 6px rgba(1, 118, 211, 0.4);
+}
+
+/* Empty container drop zone */
+.drop-zone-empty {
+    height: 2.5rem;
+    border: 2px dashed #d8dde6;
+    border-radius: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.25rem 0.5rem;
+    background-color: transparent;
+}
+.tree-container.is-dragging .drop-zone-empty {
+    border-color: #b0c4de;
+    background-color: #f7faff;
+}
+.drop-zone-empty.drop-zone-active,
+.tree-container.is-dragging .drop-zone-empty.drop-zone-active {
+    height: 2.5rem;
+    border-color: #0176d3;
+    background-color: #eef4ff;
+    box-shadow: 0 0 6px rgba(1, 118, 211, 0.3);
+}
+.empty-label {
+    font-size: 0.75rem;
+    color: #999;
+}
+
+/* ── Highlight nodes when dragging over ── */
+.tree-container.is-dragging .tree-node-folder {
+    outline: 1px dashed transparent;
+    outline-offset: -1px;
+    transition: outline-color 0.2s;
+}
+.tree-container.is-dragging .tree-node-folder:hover {
+    outline-color: #b0c4de;
+    background-color: #f0f7ff;
+}
+
+/* ── Context menu ── */
+.ctx-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: transparent;
+}
+.ctx-menu {
+    position: absolute;
+    z-index: 9999;
+    min-width: 200px;
+    background: #fff;
+    border: 1px solid #d8dde6;
+    border-radius: 0.375rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    padding: 0.25rem 0;
+}
+.ctx-menu-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 0.8125rem;
+    color: #181818;
+    text-align: left;
+    white-space: nowrap;
+}
+.ctx-menu-item:hover {
+    background-color: #f3f3f3;
+}
+.ctx-menu-item + .ctx-menu-item {
+    border-top: 1px solid #e5e5e5;
+}
+.ctx-input-wrap {
+    padding: 0.5rem 0.75rem;
+}
+.ctx-input {
+    margin-bottom: 0.375rem;
+}
+.ctx-input-actions {
+    display: flex;
+    gap: 0.375rem;
+    justify-content: flex-end;
+}

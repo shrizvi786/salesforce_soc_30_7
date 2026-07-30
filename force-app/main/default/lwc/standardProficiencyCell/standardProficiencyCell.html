@@ -1,0 +1,20 @@
+<template>
+    <div class="proficiency-actions">
+        <lightning-button
+            variant="brand"
+            label="Edit ELA"
+            title="Edit ELA proficiency score bands"
+            onclick={handleEditEla}
+            disabled={isDisabled}
+            class="proficiency-btn"
+        ></lightning-button>
+        <lightning-button
+            variant="brand"
+            label="Edit Math"
+            title="Edit Math proficiency score bands"
+            onclick={handleEditMath}
+            disabled={isDisabled}
+            class="proficiency-btn"
+        ></lightning-button>
+    </div>
+</template>

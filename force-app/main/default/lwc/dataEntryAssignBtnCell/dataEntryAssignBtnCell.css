@@ -1,0 +1,6 @@
+.assign-btn-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-right: 0.25rem;
+}

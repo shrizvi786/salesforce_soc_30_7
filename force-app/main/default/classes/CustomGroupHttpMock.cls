@@ -1,0 +1,10 @@
+@isTest
+global class CustomGroupHttpMock implements HttpCalloutMock {
+    global HTTPResponse respond(HTTPRequest req) {
+        HttpResponse res = new HttpResponse();
+        res.setStatusCode(200);
+        res.setHeader('Content-Type', 'application/json');
+        res.setBody('{"success":true}');
+        return res;
+    }
+}

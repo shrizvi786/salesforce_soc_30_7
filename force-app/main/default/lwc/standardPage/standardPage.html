@@ -1,0 +1,219 @@
+<template>
+    <lightning-card title="Comprehensive Standard Dashboard Sections" icon-name="standard:report">
+        <div class="slds-p-around_medium">
+            <template if:true={isLoadingRows}>
+                <div class="slds-align_absolute-center slds-p-around_large">
+                    <lightning-spinner alternative-text="Loading sections" size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <template if:false={isLoadingRows}>
+                <div class="slds-m-bottom_small">
+                    <lightning-input
+                        type="search"
+                        label="Search by DBN"
+                        variant="label-hidden"
+                        placeholder="Search by DBN..."
+                        value={searchTerm}
+                        onchange={handleSearch}
+                    ></lightning-input>
+                </div>
+
+                <template if:true={hasRows}>
+                    <p class="slds-m-bottom_small slds-text-body_small slds-text-color_weak">
+                        {showingRange}
+                    </p>
+                    <div class="datatable-container">
+                        <c-standard-page-datatable
+                            key={datatableRenderKey}
+                            key-field="sectionId"
+                            data={rows}
+                            columns={columns}
+                            onsort={handleSort}
+                            sorted-by={datatableSortedBy}
+                            sorted-direction={sortDirection}
+                            hide-checkbox-column
+                            onsectionhidechange={handleSectionHideChange}
+                            onproficiencyedit={handleProficiencyEdit}
+                        ></c-standard-page-datatable>
+                    </div>
+                </template>
+
+                <template if:false={hasRows}>
+                    <div class="slds-align_absolute-center slds-p-around_large">
+                        <p class="slds-text-body_regular slds-text-color_weak">
+                            <template if:true={isSearchActive}>
+                                No sections match your DBN search.
+                            </template>
+                            <template if:false={isSearchActive}>
+                                No Comprehensive Standard dashboard sections found.
+                            </template>
+                        </p>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+
+    <template if:true={isBandsModalOpen}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container modal-wide">
+                <header class="slds-modal__header">
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        variant="bare-inverse"
+                        class="slds-modal__close"
+                        onclick={closeBandsModal}
+                    ></lightning-button-icon>
+                    <h2 class="slds-modal__title slds-hyphenate">{bandsModalTitle}</h2>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_medium modal-content-no-scroll">
+                    <template if:true={isBandsLoading}>
+                        <div class="slds-align_absolute-center" style="height: 200px;">
+                            <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+                        </div>
+                    </template>
+
+                    <template if:false={isBandsLoading}>
+                        <template if:true={selectedBandsRow}>
+                            <div class="assessment-info slds-m-bottom_medium">
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_1-of-2 info-block">
+                                        <span class="info-label">Section Name</span>
+                                        <span class="info-value">{selectedBandsRow.name}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 info-block">
+                                        <span class="info-label">DBN</span>
+                                        <span class="info-value">{selectedBandsRow.dbn}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div class="levels-container">
+                            <template for:each={levelsWithStyles} for:item="level">
+                                <div key={level.key} class="level-card" style={level.cardStyle}>
+                                    <template if:true={level.canRemove}>
+                                        <button
+                                            class="remove-corner-btn"
+                                            data-level={level.key}
+                                            onclick={handleRemoveLevel}
+                                            title="Remove this level"
+                                            aria-label="Remove this level"
+                                        >
+                                            &#215;
+                                        </button>
+                                    </template>
+                                    <div
+                                        class="level-badge"
+                                        style={level.badgeStyle}
+                                        data-level={level.key}
+                                        onclick={handleBadgeClick}
+                                    >
+                                        <span class="badge-number">{level.num}</span>
+                                        <template if:true={level.canRemove}>
+                                            <span class="badge-remove">&#215;</span>
+                                        </template>
+                                    </div>
+                                    <div class="level-info">
+                                        <template if:false={level.isEditing}>
+                                            <span
+                                                class="level-label-text"
+                                                data-level={level.key}
+                                                ondblclick={handleLabelDblClick}
+                                                title="Double-click to rename"
+                                            >
+                                                {level.levelName}
+                                            </span>
+                                        </template>
+                                        <template if:true={level.isEditing}>
+                                            <lightning-input
+                                                type="text"
+                                                variant="label-hidden"
+                                                label="Level name"
+                                                value={level.levelName}
+                                                data-edit-level={level.key}
+                                                onblur={handleLabelBlur}
+                                                onkeyup={handleLabelKeyUp}
+                                                class="inline-name-input"
+                                            ></lightning-input>
+                                        </template>
+                                    </div>
+                                    <div class="level-input-group">
+                                        <span class="input-prefix">{level.inputLabel}</span>
+                                        <lightning-input
+                                            type="number"
+                                            variant="label-hidden"
+                                            label="Value"
+                                            value={level.value}
+                                            data-level={level.key}
+                                            onchange={handleLevelValueChange}
+                                            min="0"
+                                            class="value-input"
+                                        ></lightning-input>
+                                        <span class="input-suffix">%</span>
+                                    </div>
+                                    <div class="level-color-group">
+                                        <input
+                                            type="color"
+                                            value={level.color}
+                                            data-level={level.key}
+                                            onchange={handleColorChange}
+                                            class="color-swatch"
+                                        />
+                                        <lightning-input
+                                            type="text"
+                                            variant="label-hidden"
+                                            label="Hex"
+                                            value={level.color}
+                                            data-level={level.key}
+                                            onchange={handleHexInput}
+                                            class="hex-input"
+                                            maxlength="7"
+                                        ></lightning-input>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <template if:true={canAddLevel}>
+                            <div class="add-level-container slds-m-top_small">
+                                <lightning-button
+                                    label={addLevelLabel}
+                                    icon-name="utility:add"
+                                    variant="neutral"
+                                    onclick={handleAddLevel}
+                                ></lightning-button>
+                            </div>
+                        </template>
+
+                        <template if:true={hasSequentialError}>
+                            <div class="validation-error slds-m-top_small">
+                                <lightning-icon
+                                    icon-name="utility:error"
+                                    size="x-small"
+                                    variant="error"
+                                    class="slds-m-right_x-small"
+                                ></lightning-icon>
+                                <span>{sequentialError}</span>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={closeBandsModal}></lightning-button>
+                    <lightning-button
+                        label="Save &amp; Close"
+                        variant="brand"
+                        onclick={handleSaveBands}
+                        disabled={isBandsSaveDisabled}
+                        class="slds-m-left_small"
+                    ></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>
