@@ -396,4 +396,142 @@ private class ProductMediaServiceChecker_video_phTest {
 
         System.assertEquals('test-api-token-123', token, 'Should return test token during test context');
     }
+
+    @isTest
+    static void testCompositeKeyHelpers() {
+        System.assertEquals(
+            true,
+            ProductMediaServiceChecker_video_photo.isPhotosVideosCompositeKey(
+                '19K292|21-22|Photos',
+                '19k292',
+                'Photos'
+            )
+        );
+        System.assertEquals(
+            false,
+            ProductMediaServiceChecker_video_photo.isPhotosVideosCompositeKey(
+                '19K292 Photos',
+                '19K292',
+                'Photos'
+            )
+        );
+        System.assertEquals(
+            '21-22',
+            ProductMediaServiceChecker_video_photo.schoolYearFromCompositeKey('19K292|21-22|Photos')
+        );
+    }
+
+    @isTest
+    static void testReuseOldYearItemWhenNoOppsRemain() {
+        Test.setMock(HttpCalloutMock.class, new MockHttpResponse());
+        Account testAccount = createTestAccount('19K100');
+        insert buildPhotosVideosOpportunity(
+            testAccount,
+            '19K100 Photography 25-26',
+            'Photography',
+            3000,
+            '25-26'
+        );
+
+        Map<String, String> existing = new Map<String, String>{
+            '19K100|21-22|Photos' => 'OLDFILESID'
+        };
+
+        System.assertEquals(
+            'OLDFILESID',
+            ProductMediaServiceChecker_video_photo.findReusablePhotosVideosItemId(
+                existing,
+                '19K100',
+                '25-26',
+                '21-22',
+                'Photography'
+            ),
+            'Should reuse the old-year Monday row when no SF opp remains for 21-22'
+        );
+    }
+
+    @isTest
+    static void testDoNotReuseOldYearItemWhenOtherOppsRemain() {
+        Test.setMock(HttpCalloutMock.class, new MockHttpResponse());
+        Account testAccount = createTestAccount('19K101');
+        insert new List<Opportunity>{
+            buildPhotosVideosOpportunity(testAccount, '19K101 Photo 21-22', 'Photography', 2000, '21-22'),
+            buildPhotosVideosOpportunity(testAccount, '19K101 Photo 25-26', 'Photography', 3000, '25-26')
+        };
+
+        Map<String, String> existing = new Map<String, String>{
+            '19K101|21-22|Photos' => 'OLDFILESID',
+            '19K101|25-26|Photos' => 'NEWID'
+        };
+
+        System.assertEquals(
+            null,
+            ProductMediaServiceChecker_video_photo.findReusablePhotosVideosItemId(
+                existing,
+                '19K101',
+                '25-26',
+                '21-22',
+                'Photography'
+            ),
+            'Should keep the old-year row and create a new DBN|SY|Type row when 21-22 still has an opp'
+        );
+    }
+
+    @isTest
+    static void testReuseOrphanItemWithoutOldYearHint() {
+        Test.setMock(HttpCalloutMock.class, new MockHttpResponse());
+        Account testAccount = createTestAccount('19K102');
+        insert buildPhotosVideosOpportunity(
+            testAccount,
+            '19K102 Photography 25-26',
+            'Photography',
+            1500,
+            '25-26'
+        );
+
+        Map<String, String> existing = new Map<String, String>{
+            '19K102|21-22|Photos' => 'ORPHANID'
+        };
+
+        System.assertEquals(
+            'ORPHANID',
+            ProductMediaServiceChecker_video_photo.findReusablePhotosVideosItemId(
+                existing,
+                '19K102',
+                '25-26',
+                null,
+                'Photography'
+            ),
+            'Should reuse a single orphan DBN+Type row that has no matching SF year'
+        );
+    }
+
+    @isTest
+    static void testExecuteWithOldSchoolYearMap() {
+        Test.setMock(HttpCalloutMock.class, new MockHttpResponse());
+
+        Account testAccount = createTestAccount('19K103');
+        Opportunity testOpportunity = buildPhotosVideosOpportunity(
+            testAccount,
+            '19K103 Photography',
+            'Photography',
+            1000,
+            '25-26'
+        );
+        insert testOpportunity;
+
+        Test.startTest();
+        System.enqueueJob(new ProductMediaServiceChecker_video_photo(
+            new Set<Id>{ testOpportunity.Id },
+            new Map<Id, String>(),
+            new Map<Id, Opportunity>(),
+            new Map<Id, String>{ testOpportunity.Id => '21-22' }
+        ));
+        Test.stopTest();
+
+        System.assertEquals(
+            '19K103|25-26|Photos',
+            ProductMediaServiceChecker_video_photo.buildPhotosVideosItemKey('19K103', '25-26', 'Photography')
+        );
+    }
 }
