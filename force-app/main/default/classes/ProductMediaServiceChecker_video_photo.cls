@@ -1,6 +1,7 @@
 public class ProductMediaServiceChecker_video_photo implements Queueable, Database.AllowsCallouts {
     private Set<Id> opportunityIds;
     private Map<Id, String> oldServiceMap;
+    private Map<Id, String> oldSchoolYearMap;
     private Map<Id, Opportunity> deletedMediaOppSnapshots;
 
     public static final String PHOTOS_VIDEOS_BOARD_ID = '7743430753';
@@ -53,7 +54,7 @@ public class ProductMediaServiceChecker_video_photo implements Queueable, Databa
     };
 
     public ProductMediaServiceChecker_video_photo(Set<Id> opportunityIds, Map<Id, String> oldServiceMap) {
-        this(opportunityIds, oldServiceMap, new Map<Id, Opportunity>());
+        this(opportunityIds, oldServiceMap, new Map<Id, Opportunity>(), new Map<Id, String>());
     }
 
     public ProductMediaServiceChecker_video_photo(
@@ -61,11 +62,21 @@ public class ProductMediaServiceChecker_video_photo implements Queueable, Databa
         Map<Id, String> oldServiceMap,
         Map<Id, Opportunity> deletedMediaOppSnapshots
     ) {
+        this(opportunityIds, oldServiceMap, deletedMediaOppSnapshots, new Map<Id, String>());
+    }
+
+    public ProductMediaServiceChecker_video_photo(
+        Set<Id> opportunityIds,
+        Map<Id, String> oldServiceMap,
+        Map<Id, Opportunity> deletedMediaOppSnapshots,
+        Map<Id, String> oldSchoolYearMap
+    ) {
         this.opportunityIds = opportunityIds;
         this.oldServiceMap = oldServiceMap != null ? oldServiceMap : new Map<Id, String>();
         this.deletedMediaOppSnapshots = deletedMediaOppSnapshots != null
             ? deletedMediaOppSnapshots
             : new Map<Id, Opportunity>();
+        this.oldSchoolYearMap = oldSchoolYearMap != null ? oldSchoolYearMap : new Map<Id, String>();
     }
 
     public void execute(QueueableContext context) {
@@ -88,9 +99,12 @@ public class ProductMediaServiceChecker_video_photo implements Queueable, Databa
                 if (oldService != null && oldService != newService) {
                     String oldBoardId = MEDIA_SERVICE_TO_BOARD.get(oldService);
                     if (oldBoardId == PHOTOS_VIDEOS_BOARD_ID) {
+                        String yearForOldService = oldSchoolYearMap.containsKey(oppId)
+                            ? oldSchoolYearMap.get(oppId)
+                            : opp.School_Year__c;
                         refreshPhotosVideosMondayItem(
                             opp.Account != null ? opp.Account.DBN__c : null,
-                            opp.School_Year__c,
+                            yearForOldService,
                             oldService
                         );
                     } else if (oldBoardId != null) {
@@ -115,7 +129,8 @@ public class ProductMediaServiceChecker_video_photo implements Queueable, Databa
                     opp.Amount,
                     opp.School_Year__c,
                     boardId,
-                    opp.Id
+                    opp.Id,
+                    oldSchoolYearMap.get(oppId)
                 );
             } else if (oldServiceMap.containsKey(oppId)) {
                 String service = oldServiceMap.get(oppId);
@@ -148,13 +163,44 @@ public class ProductMediaServiceChecker_video_photo implements Queueable, Databa
         String boardId,
         String opportunityId
     ) {
+        processMondayMediaItems(
+            name,
+            dbn,
+            accountName,
+            service,
+            workOrderSentDate,
+            productServiceStartDate,
+            status,
+            amount,
+            schoolYear,
+            boardId,
+            opportunityId,
+            null
+        );
+    }
+
+    public static void processMondayMediaItems(
+        String name,
+        String dbn,
+        String accountName,
+        String service,
+        Date workOrderSentDate,
+        Date productServiceStartDate,
+        String status,
+        Decimal amount,
+        String schoolYear,
+        String boardId,
+        String opportunityId,
+        String oldSchoolYear
+    ) {
         if (boardId == PHOTOS_VIDEOS_BOARD_ID) {
             processPhotosVideosMondayItem(
                 dbn,
                 accountName,
                 service,
                 productServiceStartDate,
-                schoolYear
+                schoolYear,
+                oldSchoolYear
             );
             return;
         }
@@ -195,6 +241,25 @@ public class ProductMediaServiceChecker_video_photo implements Queueable, Databa
         Date productServiceStartDate,
         String schoolYear
     ) {
+        processPhotosVideosMondayItem(
+            dbn,
+            accountName,
+            service,
+            productServiceStartDate,
+            schoolYear,
+            null
+        );
+    }
+
+    @TestVisible
+    private static void processPhotosVideosMondayItem(
+        String dbn,
+        String accountName,
+        String service,
+        Date productServiceStartDate,
+        String schoolYear,
+        String oldSchoolYear
+    ) {
         if (String.isBlank(dbn) || String.isBlank(schoolYear) || String.isBlank(service)) {
             return;
         }
@@ -211,8 +276,22 @@ public class ProductMediaServiceChecker_video_photo implements Queueable, Databa
 
         Map<String, String> existing = getPhotosVideosMondayItems();
         String projectType = PRODUCT_SERVICE_TO_PROJECT_TYPE.get(service);
-        String itemId = findPhotosVideosItemId(existing, itemKey, dbn, schoolYear, projectType);
+        String newItemId = findPhotosVideosItemId(existing, itemKey, dbn, schoolYear, projectType);
+        String reusableItemId = findReusablePhotosVideosItemId(
+            existing,
+            dbn,
+            schoolYear,
+            oldSchoolYear,
+            service
+        );
 
+        String itemId = reusableItemId;
+        if (itemId != null && newItemId != null && newItemId != itemId) {
+            deleteMondayItemById(newItemId);
+        }
+        if (itemId == null) {
+            itemId = newItemId;
+        }
         if (itemId == null) {
             itemId = createMondayItem(
                 resolvedAccountName,
@@ -225,10 +304,10 @@ public class ProductMediaServiceChecker_video_photo implements Queueable, Databa
             return;
         }
 
+        renameMondayItemName(itemId, itemKey);
+
         Decimal totalAmount = getTotalPhotosVideosAmount(dbn, schoolYear, service);
         String sfStatus = resolvePhotosVideosSfStatus(dbn, schoolYear, service);
-        // SY column uses Product_Service_End_Date (same as Partners & Leads Paid Until / school year)
-        String displaySchoolYear = resolvePhotosVideosSchoolYear(dbn, schoolYear, service);
         updateMondayItemColumns(
             itemId,
             PHOTOS_VIDEOS_BOARD_ID,
@@ -240,7 +319,7 @@ public class ProductMediaServiceChecker_video_photo implements Queueable, Databa
             productServiceStartDate,
             sfStatus,
             totalAmount,
-            displaySchoolYear
+            schoolYear
         );
     }
 
@@ -613,6 +692,107 @@ public class ProductMediaServiceChecker_video_photo implements Queueable, Databa
         return normalizedKey != null && existing.containsKey(normalizedKey)
             ? existing.get(normalizedKey)
             : null;
+    }
+
+    /**
+     * When School_Year__c changes on the same opportunity and no other SF opps remain
+     * for the old DBN + old year + product, reuse that Monday row (files stay).
+     * If another opp still exists for the old year, return null so a new DBN|SY|Type row is created.
+     */
+    @TestVisible
+    private static String findReusablePhotosVideosItemId(
+        Map<String, String> existing,
+        String dbn,
+        String schoolYear,
+        String oldSchoolYear,
+        String service
+    ) {
+        if (existing == null || existing.isEmpty() || String.isBlank(dbn) || String.isBlank(service)) {
+            return null;
+        }
+
+        String projectType = PRODUCT_SERVICE_TO_PROJECT_TYPE.get(service);
+        if (String.isBlank(projectType)) {
+            return null;
+        }
+
+        String normalizedNewYear = normalizeSchoolYear(schoolYear);
+        String normalizedOldYear = normalizeSchoolYear(oldSchoolYear);
+
+        if (String.isNotBlank(normalizedOldYear) && normalizedOldYear != normalizedNewYear) {
+            if (hasPhotosVideosOpportunity(dbn, normalizedOldYear, service)) {
+                return null;
+            }
+            String oldKey = buildPhotosVideosItemKey(dbn, normalizedOldYear, service);
+            String oldItemId = findPhotosVideosItemId(
+                existing,
+                oldKey,
+                dbn,
+                normalizedOldYear,
+                projectType
+            );
+            if (oldItemId != null) {
+                return oldItemId;
+            }
+        }
+
+        return findOrphanPhotosVideosItemId(existing, dbn, normalizedNewYear, service, projectType);
+    }
+
+    @TestVisible
+    private static Boolean hasPhotosVideosOpportunity(String dbn, String schoolYear, String service) {
+        return getLatestPhotosVideosOpportunity(dbn, schoolYear, service) != null;
+    }
+
+    @TestVisible
+    private static Boolean isPhotosVideosCompositeKey(String key, String dbn, String projectType) {
+        if (String.isBlank(key) || String.isBlank(dbn) || String.isBlank(projectType)) {
+            return false;
+        }
+        List<String> parts = key.split('\\|');
+        return parts.size() == 3
+            && normalizeDbn(parts[0]) == normalizeDbn(dbn)
+            && parts[2].trim() == projectType;
+    }
+
+    @TestVisible
+    private static String schoolYearFromCompositeKey(String key) {
+        if (String.isBlank(key)) {
+            return null;
+        }
+        List<String> parts = key.split('\\|');
+        return parts.size() == 3 ? normalizeSchoolYear(parts[1]) : null;
+    }
+
+    private static String findOrphanPhotosVideosItemId(
+        Map<String, String> existing,
+        String dbn,
+        String newSchoolYear,
+        String service,
+        String projectType
+    ) {
+        Set<String> orphanItemIds = new Set<String>();
+        for (String key : existing.keySet()) {
+            if (!isPhotosVideosCompositeKey(key, dbn, projectType)) {
+                continue;
+            }
+            String keyYear = schoolYearFromCompositeKey(key);
+            if (String.isBlank(keyYear) || keyYear == newSchoolYear) {
+                continue;
+            }
+            if (!hasPhotosVideosOpportunity(dbn, keyYear, service)) {
+                orphanItemIds.add(existing.get(key));
+            }
+        }
+        return orphanItemIds.size() == 1 ? new List<String>(orphanItemIds)[0] : null;
+    }
+
+    @TestVisible
+    private static void renameMondayItemName(String itemId, String itemName) {
+        if (String.isBlank(itemId) || String.isBlank(itemName)) {
+            return;
+        }
+        callMondayMutation(itemId, PHOTOS_VIDEOS_BOARD_ID, 'name', itemName);
     }
 
     public static String createMondayItem(String name, String boardId, String itemName) {
