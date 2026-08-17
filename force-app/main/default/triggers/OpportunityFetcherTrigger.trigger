@@ -46,6 +46,7 @@ Set<Id> opportunitysales = new Set<Id>();
 Set<Id> CoachingopportunityIds = new Set<Id>();
 Set<Id> mediaServiceOpportunityIds = new Set<Id>();
 Map<Id, String> oldServiceMap = new Map<Id, String>();
+Map<Id, String> oldSchoolYearMap = new Map<Id, String>();
 Map<Id, Opportunity> deletedMediaOppSnapshots = new Map<Id, Opportunity>();
 List<Id> newInsertOpportunityIds = new List<Id>();
 
@@ -84,6 +85,12 @@ if (Trigger.isInsert || Trigger.isUpdate) {
             // Store old Product_Service__c value for comparison
             if (oldOpp !=null && oldOpp.Product_Service__c != opp.Product_Service__c && mediaProductServices.contains(oldOpp.Product_Service__c)) {
                 oldServiceMap.put(opp.Id, oldOpp.Product_Service__c);
+            }
+            if (oldOpp != null
+                && oldOpp.School_Year__c != opp.School_Year__c
+                && mediaProductServices.contains(opp.Product_Service__c)
+            ) {
+                oldSchoolYearMap.put(opp.Id, oldOpp.School_Year__c);
             }
         }
     }
@@ -179,7 +186,12 @@ if (!CoachingopportunityIds.isEmpty()) {
 }
 // Media Service Opportunities to Monday.com (only if Product_Service__c matches)
 if (!mediaServiceOpportunityIds.isEmpty()) {
-    System.enqueueJob(new ProductMediaServiceChecker_video_photo(mediaServiceOpportunityIds, oldServiceMap, deletedMediaOppSnapshots));
+    System.enqueueJob(new ProductMediaServiceChecker_video_photo(
+        mediaServiceOpportunityIds,
+        oldServiceMap,
+        deletedMediaOppSnapshots,
+        oldSchoolYearMap
+    ));
 }
     
 
